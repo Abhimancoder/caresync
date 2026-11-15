@@ -31,6 +31,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy headers (Render, Cloud Run, Heroku)
+app.set('trust proxy', 1);
+
 // 1. Security Headers & CORS
 app.use(helmet({
   contentSecurityPolicy: false, // Allows flexible CDN assets and fonts for evaluation

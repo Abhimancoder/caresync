@@ -9,6 +9,7 @@ export const invitationVerificationLimiter = rateLimit({
   max: 5, // Limit each IP to 5 passcode attempts per windowMs
   standardHeaders: true, // Return standard RateLimit-* headers
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     error: 'Too many invalid passcode attempts from this IP. For security reasons, please try again in 15 minutes.',
@@ -24,6 +25,7 @@ export const generalApiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     error: 'Too many requests. Please slow down and try again later.',
