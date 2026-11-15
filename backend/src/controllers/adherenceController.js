@@ -8,9 +8,22 @@ import { memoryDoses, ensureDosesForDate } from './doseController.js';
  */
 
 /**
- * Computes adherence metrics from a collection of dose records
- * @param {Array} doses
- * @param {Date} referenceTime
+ * Computes adherence metrics from a collection of dose records.
+ * Follows clinical adherence standards: future doses are never penalized as missed,
+ * and valid clinical skips are excluded from the denominator.
+ * 
+ * @param {Array<Object>} doses - List of medication dose records
+ * @param {Date} [referenceTime=new Date()] - Evaluation timestamp
+ * @returns {{
+ *   adherenceRate: number,
+ *   punctualityRate: number,
+ *   totalTaken: number,
+ *   totalMissed: number,
+ *   totalSkipped: number,
+ *   totalUpcoming: number,
+ *   totalPastDoses: number,
+ *   onTimeTaken: number
+ * }} Calculated compliance and punctuality metrics
  */
 export function calculateAdherenceMetrics(doses = [], referenceTime = new Date()) {
   const nowIso = referenceTime.toISOString();
@@ -77,9 +90,34 @@ export function calculateAdherenceMetrics(doses = [], referenceTime = new Date()
 }
 
 /**
- * Builds 7-day or 30-day daily breakdown for Chart.js
+ * Builds 7-day or 30-day daily breakdown for Chart.js.
+ * Optimized with O(N) pre-bucketing to prevent redundant array scans.
+ * 
+ * @param {Array<Object>} doses - Dose history array
+ * @param {number} [daysCount=7] - Number of days to calculate
+ * @param {Date} [referenceDate=new Date()] - Reference date
+ * @returns {Array<{date: string, label: string, adherenceRate: number, taken: number, missed: number, skipped: number, totalDoses: number}>}
  */
 export function buildTrendData(doses = [], daysCount = 7, referenceDate = new Date()) {
+  // Pre-aggregate doses by scheduledDate in a single O(N) pass
+  const dosesByDate = new Map();
+  for (const dose of doses) {
+    if (!dose || !dose.scheduledDate) continue;
+    let bucket = dosesByDate.get(dose.scheduledDate);
+    if (!bucket) {
+      bucket = { taken: 0, missed: 0, skipped: 0, total: 0 };
+      dosesByDate.set(dose.scheduledDate, bucket);
+    }
+    bucket.total++;
+    if (dose.status === DOSE_STATUS.TAKEN) {
+      bucket.taken++;
+    } else if (dose.status === DOSE_STATUS.MISSED) {
+      bucket.missed++;
+    } else if (dose.status === DOSE_STATUS.SKIPPED) {
+      bucket.skipped++;
+    }
+  }
+
   const trend = [];
 
   for (let i = daysCount - 1; i >= 0; i--) {
@@ -88,24 +126,20 @@ export function buildTrendData(doses = [], daysCount = 7, referenceDate = new Da
     const dateStr = d.toISOString().split('T')[0];
     const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
 
-    const dayDoses = doses.filter(item => item.scheduledDate === dateStr);
-    const dayTaken = dayDoses.filter(item => item.status === DOSE_STATUS.TAKEN).length;
-    const dayMissed = dayDoses.filter(item => item.status === DOSE_STATUS.MISSED).length;
-    const daySkipped = dayDoses.filter(item => item.status === DOSE_STATUS.SKIPPED).length;
-
-    const pastDayTotal = dayTaken + dayMissed;
+    const bucket = dosesByDate.get(dateStr) || { taken: 0, missed: 0, skipped: 0, total: 0 };
+    const pastDayTotal = bucket.taken + bucket.missed;
     const dayRate = pastDayTotal > 0
-      ? Math.round((dayTaken / pastDayTotal) * 100)
+      ? Math.round((bucket.taken / pastDayTotal) * 100)
       : 100; // If no missed doses, default to 100% compliance
 
     trend.push({
       date: dateStr,
       label: dayLabel,
       adherenceRate: dayRate,
-      taken: dayTaken,
-      missed: dayMissed,
-      skipped: daySkipped,
-      totalDoses: dayDoses.length,
+      taken: bucket.taken,
+      missed: bucket.missed,
+      skipped: bucket.skipped,
+      totalDoses: bucket.total,
     });
   }
 

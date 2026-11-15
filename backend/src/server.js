@@ -82,14 +82,25 @@ app.use('/api/cron', cronRoutes);
 const publicPath = path.resolve(__dirname, '../public');
 const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 
+const staticCacheOptions = {
+  maxAge: '1d',
+  etag: true,
+  setHeaders: (res, filePath) => {
+    // Aggressive immutable cache for hashed Vite production assets
+    if (filePath.includes(path.sep + 'assets' + path.sep) || filePath.includes('/assets/')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  },
+};
+
 if (fs.existsSync(publicPath)) {
-  app.use(express.static(publicPath));
+  app.use(express.static(publicPath, staticCacheOptions));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(publicPath, 'index.html'));
   });
 } else if (fs.existsSync(frontendDistPath)) {
-  app.use(express.static(frontendDistPath));
+  app.use(express.static(frontendDistPath, staticCacheOptions));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(frontendDistPath, 'index.html'));
