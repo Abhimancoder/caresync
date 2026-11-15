@@ -37,7 +37,9 @@ export function ProfileProvider({ children }) {
       if (res.data && res.data.length > 0) {
         setProfiles(res.data);
         const currentStillExists = res.data.find(p => p.id === activeProfile?.id);
-        if (!currentStillExists) {
+        if (currentStillExists) {
+          setActiveProfile(currentStillExists);
+        } else {
           setActiveProfile(res.data[0]);
         }
       }

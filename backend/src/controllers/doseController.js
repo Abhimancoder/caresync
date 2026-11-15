@@ -329,9 +329,21 @@ export async function generateDoseSchedule(req, res, next) {
   }
 }
 
+/**
+ * Removes upcoming un-taken doses when a medication is discontinued
+ */
+export function removeUpcomingDosesForMedication(medId) {
+  for (let i = memoryDoses.length - 1; i >= 0; i--) {
+    if (memoryDoses[i].medicationId === medId && memoryDoses[i].status === DOSE_STATUS.UPCOMING) {
+      memoryDoses.splice(i, 1);
+    }
+  }
+}
+
 export default {
   getTodayDoses,
   updateDoseStatus,
   generateDoseSchedule,
   ensureDosesForDate,
+  removeUpcomingDosesForMedication,
 };

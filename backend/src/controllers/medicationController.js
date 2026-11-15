@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/firebaseAdmin.js';
 import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, DOSE_STATUS } from '../config/constants.js';
+import { removeUpcomingDosesForMedication } from './doseController.js';
 
 // In-memory store fallback for demo & evaluation
 export const memoryMedications = [
@@ -240,6 +241,7 @@ export async function deleteMedication(req, res, next) {
         medName = med.name;
         profileId = med.profileId;
         med.isActive = false;
+        removeUpcomingDosesForMedication(id);
       }
     }
 
