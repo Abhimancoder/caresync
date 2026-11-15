@@ -28,6 +28,8 @@ describe('CareSync Input Validation & Clinical Sanitization Tests', () => {
       expect(isValidDateStr('15-11-2026')).toBe(false);
       expect(isValidDateStr('2026/11/15')).toBe(false);
       expect(isValidDateStr('invalid-date')).toBe(false);
+      expect(isValidDateStr(null)).toBe(false);
+      expect(isValidDateStr(123)).toBe(false);
     });
 
     test('validates 24-hour HH:MM time strings', () => {
@@ -40,6 +42,8 @@ describe('CareSync Input Validation & Clinical Sanitization Tests', () => {
       expect(isValidTimeStr('25:00')).toBe(false);
       expect(isValidTimeStr('8:00')).toBe(false);
       expect(isValidTimeStr('noon')).toBe(false);
+      expect(isValidTimeStr(null)).toBe(false);
+      expect(isValidTimeStr(123)).toBe(false);
     });
   });
 
@@ -92,6 +96,26 @@ describe('CareSync Input Validation & Clinical Sanitization Tests', () => {
       expect(result.isValid).toBe(false);
       expect(result.errors.some(e => e.includes('startDate cannot be after endDate'))).toBe(true);
     });
+
+    test('rejects non-object medication payload', () => {
+      expect(validateMedicationInput(null).isValid).toBe(false);
+      expect(validateMedicationInput('invalid-payload').isValid).toBe(false);
+    });
+
+    test('rejects missing dosage and invalid time/date format', () => {
+      const payload = {
+        name: 'Aspirin',
+        scheduledTimes: ['25:00'],
+        startDate: 'bad-date',
+        endDate: 'bad-date',
+      };
+      const result = validateMedicationInput(payload);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some(e => e.includes('Dosage is required'))).toBe(true);
+      expect(result.errors.some(e => e.includes('Invalid time format'))).toBe(true);
+      expect(result.errors.some(e => e.includes('Invalid startDate'))).toBe(true);
+      expect(result.errors.some(e => e.includes('Invalid endDate'))).toBe(true);
+    });
   });
 
   describe('Doctor Appointment Payload Validation', () => {
@@ -106,15 +130,20 @@ describe('CareSync Input Validation & Clinical Sanitization Tests', () => {
       expect(result.isValid).toBe(true);
     });
 
-    test('rejects missing doctor name and invalid date', () => {
+    test('rejects non-object appointment payload', () => {
+      expect(validateAppointmentInput(null).isValid).toBe(false);
+      expect(validateAppointmentInput('invalid').isValid).toBe(false);
+    });
+
+    test('rejects missing doctor name and invalid date/time', () => {
       const payload = {
         doctorName: '',
         appointmentDate: 'not-a-date',
-        appointmentTime: '14:30',
+        appointmentTime: 'not-a-time',
       };
       const result = validateAppointmentInput(payload);
       expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThanOrEqual(2);
+      expect(result.errors.length).toBeGreaterThanOrEqual(3);
     });
   });
 });

@@ -43,4 +43,30 @@ describe('CareSync API Endpoints Tests', () => {
     expect(res.body.metrics.adherenceRate).toBeGreaterThanOrEqual(0);
     expect(res.body.metrics.adherenceRate).toBeLessThanOrEqual(100);
   });
+
+  test('GET /api/medications rejects request without profileId query param', async () => {
+    const res = await request(app)
+      .get('/api/medications')
+      .set('Authorization', 'Bearer demo-token-caretaker');
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('profileId query parameter is required');
+  });
+
+  test('PUT /api/medications/:id allows caretaker to update prescription instructions', async () => {
+    const res = await request(app)
+      .put('/api/medications/med-demo-1')
+      .set('Authorization', 'Bearer demo-token-caretaker')
+      .send({ instructions: 'Take 1 tablet with warm water after breakfast' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test('DELETE /api/medications/:id allows caretaker to discontinue medication', async () => {
+    const res = await request(app)
+      .delete('/api/medications/med-demo-3')
+      .set('Authorization', 'Bearer demo-token-caretaker');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
 });
