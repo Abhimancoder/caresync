@@ -5,7 +5,7 @@ import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, USER_ROLES } from '../config/constants.js';
 
 // In-memory store fallback for demo & evaluation
-const memoryInvitations = [];
+export const memoryInvitations = [];
 const memoryProfiles = [
   {
     id: 'demo-profile-robert',
@@ -78,6 +78,7 @@ export async function generateInvitation(req, res, next) {
       maxUses: Number(maxUses),
       usedCount: 0,
       isRevoked: false,
+      redeemedUserIds: [],
       createdByUserId: req.user?.uid || 'system',
       createdAt: new Date().toISOString(),
     };
@@ -176,37 +177,188 @@ export async function verifyAndJoin(req, res, next) {
       name: userName,
       role: matchedInvite.role,
       joinedAt: new Date().toISOString(),
+      verifiedInviteId: matchedInvite.id, // Cryptographic provenance proof
     };
 
     if (db && typeof db.collection === 'function') {
-      // 1. Update Profile
+      const inviteRef = db.collection('invitations').doc(matchedInvite.id);
       const profileRef = db.collection('elderlyProfiles').doc(matchedInvite.profileId);
-      const profileDoc = await profileRef.get();
-      if (profileDoc.exists) {
-        const existingMembers = profileDoc.data().authorizedMembers || [];
-        const alreadyMember = existingMembers.some(m => m.userId === userUid);
-        if (!alreadyMember) {
+
+      if (typeof db.runTransaction === 'function') {
+        await db.runTransaction(async (transaction) => {
+          // 1. Read fresh invitation document inside transaction
+          const freshInviteDoc = await transaction.get(inviteRef);
+          if (!freshInviteDoc.exists) {
+            throw new Error('INVITATION_NOT_FOUND');
+          }
+          const freshInvite = freshInviteDoc.data();
+
+          // 2. Validate status, expiry, and max uses inside transaction
+          if (freshInvite.isRevoked) {
+            throw new Error('INVITATION_REVOKED');
+          }
+          if (new Date(freshInvite.expiresAt) <= new Date()) {
+            throw new Error('INVITATION_EXPIRED');
+          }
+          if (freshInvite.usedCount >= freshInvite.maxUses) {
+            throw new Error('INVITATION_MAX_USES_REACHED');
+          }
+
+          // 3. Read profile document inside transaction
+          const freshProfileDoc = await transaction.get(profileRef);
+          if (!freshProfileDoc.exists) {
+            throw new Error('PROFILE_NOT_FOUND');
+          }
+          const profileData = freshProfileDoc.data();
+
+          // 4. Compute updated membership & role arrays
+          const existingMembers = Array.isArray(profileData.authorizedMembers) ? profileData.authorizedMembers : [];
+          const updatedMembers = existingMembers.filter(m => m.userId !== userUid);
+          updatedMembers.push(newMemberRecord);
+
+          const existingUserIds = profileData.authorizedUserIds || existingMembers.map(m => m.userId);
+          const existingCaretakerIds = profileData.authorizedCaretakerIds || 
+            existingMembers.filter(m => m.role === USER_ROLES.CARETAKER).map(m => m.userId);
+          const existingFamilyIds = profileData.authorizedFamilyIds || 
+            existingMembers.filter(m => m.role === USER_ROLES.FAMILY).map(m => m.userId);
+
+          const userIdsSet = new Set([...existingUserIds, userUid]);
+          const caretakerIdsSet = new Set(existingCaretakerIds);
+          const familyIdsSet = new Set(existingFamilyIds);
+          const revokedUserIdsSet = new Set(profileData.revokedUserIds || []);
+          revokedUserIdsSet.delete(userUid); // Clear prior revocation upon legitimate redemption
+
+          if (freshInvite.role === USER_ROLES.CARETAKER) {
+            caretakerIdsSet.add(userUid);
+            familyIdsSet.delete(userUid);
+          } else if (freshInvite.role === USER_ROLES.FAMILY) {
+            familyIdsSet.add(userUid);
+            caretakerIdsSet.delete(userUid);
+          }
+
+          // 5. Update invitation redemption state inside transaction
+          const newUsedCount = freshInvite.usedCount + 1;
+          const updatedRedeemedUserIds = Array.from(new Set([...(freshInvite.redeemedUserIds || []), userUid]));
+          transaction.update(inviteRef, {
+            usedCount: newUsedCount,
+            isRevoked: newUsedCount >= freshInvite.maxUses,
+            redeemedUserIds: updatedRedeemedUserIds,
+            lastRedeemedByUserId: userUid,
+            lastRedeemedAt: new Date().toISOString(),
+          });
+
+          // 6. Update profile membership atomically inside transaction
+          transaction.update(profileRef, {
+            authorizedMembers: updatedMembers,
+            authorizedUserIds: Array.from(userIdsSet),
+            authorizedCaretakerIds: Array.from(caretakerIdsSet),
+            authorizedFamilyIds: Array.from(familyIdsSet),
+            revokedUserIds: Array.from(revokedUserIdsSet),
+            updatedAt: new Date().toISOString(),
+          });
+        });
+      } else {
+        // Fallback for non-transactional database mocks
+        const profileDoc = await profileRef.get();
+        if (profileDoc.exists) {
+          const data = profileDoc.data();
+          const existingMembers = Array.isArray(data.authorizedMembers) ? data.authorizedMembers : [];
+          const updatedMembers = existingMembers.filter(m => m.userId !== userUid);
+          updatedMembers.push(newMemberRecord);
+
+          const existingUserIds = data.authorizedUserIds || existingMembers.map(m => m.userId);
+          const existingCaretakerIds = data.authorizedCaretakerIds || 
+            existingMembers.filter(m => m.role === USER_ROLES.CARETAKER).map(m => m.userId);
+          const existingFamilyIds = data.authorizedFamilyIds || 
+            existingMembers.filter(m => m.role === USER_ROLES.FAMILY).map(m => m.userId);
+
+          const userIdsSet = new Set([...existingUserIds, userUid]);
+          const caretakerIdsSet = new Set(existingCaretakerIds);
+          const familyIdsSet = new Set(existingFamilyIds);
+          const revokedUserIdsSet = new Set(data.revokedUserIds || []);
+          revokedUserIdsSet.delete(userUid);
+
+          if (matchedInvite.role === USER_ROLES.CARETAKER) {
+            caretakerIdsSet.add(userUid);
+            familyIdsSet.delete(userUid);
+          } else if (matchedInvite.role === USER_ROLES.FAMILY) {
+            familyIdsSet.add(userUid);
+            caretakerIdsSet.delete(userUid);
+          }
+
           await profileRef.update({
-            authorizedMembers: [...existingMembers, newMemberRecord],
+            authorizedMembers: updatedMembers,
+            authorizedUserIds: Array.from(userIdsSet),
+            authorizedCaretakerIds: Array.from(caretakerIdsSet),
+            authorizedFamilyIds: Array.from(familyIdsSet),
+            revokedUserIds: Array.from(revokedUserIdsSet),
             updatedAt: new Date().toISOString(),
           });
         }
+
+        const updatedRedeemedUserIds = Array.from(new Set([...(matchedInvite.redeemedUserIds || []), userUid]));
+        await inviteRef.update({
+          usedCount: matchedInvite.usedCount + 1,
+          isRevoked: matchedInvite.usedCount + 1 >= matchedInvite.maxUses,
+          redeemedUserIds: updatedRedeemedUserIds,
+          lastRedeemedByUserId: userUid,
+          lastRedeemedAt: new Date().toISOString(),
+        });
+      }
+    } else {
+      // Memory fallback: synchronized execution
+      if (matchedInvite.isRevoked || matchedInvite.usedCount >= matchedInvite.maxUses) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invitation has already reached maximum uses or was revoked.',
+          code: 'INVITATION_EXHAUSTED',
+        });
+      }
+      if (new Date(matchedInvite.expiresAt) <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invitation has expired.',
+          code: 'INVITATION_EXPIRED',
+        });
       }
 
-      // 2. Burn invitation if max uses reached
-      await db.collection('invitations').doc(matchedInvite.id).update({
-        usedCount: matchedInvite.usedCount + 1,
-        isRevoked: matchedInvite.usedCount + 1 >= matchedInvite.maxUses,
-      });
-    } else {
-      // Memory fallback
       const profile = memoryProfiles.find(p => p.id === matchedInvite.profileId);
-      if (profile) {
-        if (!profile.authorizedMembers.some(m => m.userId === userUid)) {
-          profile.authorizedMembers.push(newMemberRecord);
-        }
+      if (!profile) {
+        return res.status(404).json({
+          success: false,
+          error: 'Associated profile not found.',
+          code: 'PROFILE_NOT_FOUND',
+        });
       }
+
+      const existingMembers = Array.isArray(profile.authorizedMembers) ? profile.authorizedMembers : [];
+      profile.authorizedMembers = [...existingMembers.filter(m => m.userId !== userUid), newMemberRecord];
+
+        const userIdsSet = new Set(profile.authorizedUserIds || []);
+        userIdsSet.add(userUid);
+
+        const caretakerIdsSet = new Set(profile.authorizedCaretakerIds || []);
+        const familyIdsSet = new Set(profile.authorizedFamilyIds || []);
+        if (profile.revokedUserIds) {
+          profile.revokedUserIds = profile.revokedUserIds.filter(uid => uid !== userUid);
+        }
+
+        if (matchedInvite.role === USER_ROLES.CARETAKER) {
+          caretakerIdsSet.add(userUid);
+          familyIdsSet.delete(userUid);
+        } else if (matchedInvite.role === USER_ROLES.FAMILY) {
+          familyIdsSet.add(userUid);
+          caretakerIdsSet.delete(userUid);
+        }
+
+        profile.authorizedUserIds = Array.from(userIdsSet);
+        profile.authorizedCaretakerIds = Array.from(caretakerIdsSet);
+        profile.authorizedFamilyIds = Array.from(familyIdsSet);
+
       matchedInvite.usedCount += 1;
+      matchedInvite.redeemedUserIds = Array.from(new Set([...(matchedInvite.redeemedUserIds || []), userUid]));
+      matchedInvite.lastRedeemedByUserId = userUid;
+      matchedInvite.lastRedeemedAt = new Date().toISOString();
       if (matchedInvite.usedCount >= matchedInvite.maxUses) {
         matchedInvite.isRevoked = true;
       }

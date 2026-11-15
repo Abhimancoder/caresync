@@ -26,6 +26,13 @@ export const DEMO_USERS = {
     role: USER_ROLES.FAMILY,
     assignedProfiles: ['demo-profile-robert'],
   },
+  'demo-unverified': {
+    uid: 'demo-unverified-intruder',
+    email: 'unverified@caresync.health',
+    displayName: 'Unverified Candidate',
+    role: USER_ROLES.CARETAKER,
+    assignedProfiles: [],
+  },
 };
 
 /**

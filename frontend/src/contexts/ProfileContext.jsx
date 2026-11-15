@@ -20,6 +20,9 @@ export const DEFAULT_PROFILE = {
     { userId: 'demo-caretaker-sarah', name: 'Sarah Jenkins', role: 'caretaker', joinedAt: '2026-11-15T08:00:00Z' },
     { userId: 'demo-family-michael', name: 'Michael Harrison', role: 'family', joinedAt: '2026-11-15T09:00:00Z' },
   ],
+  authorizedUserIds: ['demo-caretaker-sarah', 'demo-family-michael', 'demo-elderly-robert'],
+  authorizedCaretakerIds: ['demo-caretaker-sarah'],
+  authorizedFamilyIds: ['demo-family-michael'],
   medicalNotes: 'Diagnosed with mild hypertension and type 2 diabetes. Daily morning Lisinopril and evening Metformin.',
 };
 
