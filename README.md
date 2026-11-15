@@ -148,11 +148,30 @@ For PromptWars × Catalyst judges:
 
 ---
 
-## ☁️ 9. Google Cloud Run Deployment
+## ☁️ 9. Deployment Options (100% Free & No Credits Required)
 
-CareSync includes an optimized multi-stage `Dockerfile` that packages both the React production bundle and the Express backend into a single high-performance container.
+Per PromptWars competition guidelines, **Google Cloud credits are not required**. You can deploy CareSync on any service (Render, Vercel, Railway, or Google Cloud Run).
 
-### Deploying to Google Cloud Run
+### 🚀 Option A: 1-Click Free Deployment on Render (Recommended)
+Render is 100% free, requires zero credit card, and natively runs both the Express backend and React frontend.
+
+1. Sign up for free at [render.com](https://render.com).
+2. Click **New +** → **Web Service**.
+3. Select your GitHub repository (`caresync`).
+4. Configure the settings:
+   - **Name:** `caresync`
+   - **Environment:** `Node`
+   - **Build Command:** `npm install && npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend`
+   - **Start Command:** `node backend/src/server.js`
+   - **Instance Type:** `Free`
+5. Click **Create Web Service**.
+6. Render will build and deploy your app, providing a live HTTPS link like `https://caresync-xxxx.onrender.com`!
+
+---
+
+### ☁️ Option B: Google Cloud Run Deployment
+If you prefer deploying to Google Cloud Run, CareSync includes an optimized multi-stage `Dockerfile` that packages both the React production bundle and the Express backend into a single container.
+
 ```bash
 # 1. Authenticate with Google Cloud
 gcloud auth login
@@ -166,7 +185,7 @@ gcloud run deploy caresync \
   --set-env-vars NODE_ENV=production,CRON_SECRET=your-secure-cron-secret-2026
 ```
 
-### Setting up Google Cloud Scheduler
+### Setting up Google Cloud Scheduler (Optional)
 ```bash
 gcloud scheduler jobs create http caresync-reminder-job \
   --schedule="*/15 * * * *" \
