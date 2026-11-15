@@ -10,10 +10,19 @@ const api = axios.create({
 // Attach authorization bearer token to every outbound request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('caresync_auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    let token = localStorage.getItem('caresync_auth_token');
+    if (!token) {
+      const savedUser = localStorage.getItem('caresync_user');
+      if (savedUser) {
+        try {
+          const u = JSON.parse(savedUser);
+          token = u.token;
+        } catch (e) {}
+      }
+      token = token || 'demo-token-caretaker';
+      localStorage.setItem('caresync_auth_token', token);
     }
+    config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)

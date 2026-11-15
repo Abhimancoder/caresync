@@ -37,7 +37,11 @@ export const DEMO_PROFILES = {
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('caresync_user');
-    return saved ? JSON.parse(saved) : DEMO_PROFILES.caretaker; // Default to caretaker for rich evaluation
+    const user = saved ? JSON.parse(saved) : DEMO_PROFILES.caretaker;
+    if (!localStorage.getItem('caresync_auth_token')) {
+      localStorage.setItem('caresync_auth_token', user.token || 'demo-token-caretaker');
+    }
+    return user;
   });
   const [loading, setLoading] = useState(false);
 
