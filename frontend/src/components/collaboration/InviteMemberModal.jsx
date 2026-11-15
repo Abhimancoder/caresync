@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { X, KeyRound, Copy, Check, ShieldCheck, Clock } from 'lucide-react';
 
@@ -9,6 +9,22 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
   const [error, setError] = useState('');
   const [generatedInvite, setGeneratedInvite] = useState(null);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && !loading) {
+        if (generatedInvite) {
+          handleReset();
+        } else {
+          onClose();
+        }
+      }
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, loading, onClose, generatedInvite]);
 
   if (!isOpen) return null;
 

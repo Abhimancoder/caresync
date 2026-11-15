@@ -11,6 +11,7 @@ export default function ElderlyChecklistPage() {
   const [doses, setDoses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [actionError, setActionError] = useState('');
 
   const fetchDoses = async () => {
     try {
@@ -31,11 +32,12 @@ export default function ElderlyChecklistPage() {
   const handleMarkTaken = async (dose) => {
     try {
       setUpdatingId(dose.id);
+      setActionError('');
       await api.patch(`/doses/${dose.id}/status`, { status: 'taken' });
       speak(`Great job! You marked ${dose.medicationName} as taken.`);
       await fetchDoses();
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message || 'Could not update dose status.');
     } finally {
       setUpdatingId(null);
     }
@@ -90,6 +92,13 @@ export default function ElderlyChecklistPage() {
           Tap the big green button below when you have swallowed your medicine.
         </p>
       </div>
+
+      {actionError && (
+        <div role="alert" className="p-4 rounded-2xl bg-red-50 border-2 border-red-200 text-sm font-bold text-red-700 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+          <span>{actionError}</span>
+        </div>
+      )}
 
       {/* Large Touch Target Medication Cards */}
       {loading ? (

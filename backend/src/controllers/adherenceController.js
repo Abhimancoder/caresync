@@ -8,6 +8,39 @@ import { memoryDoses, ensureDosesForDate } from './doseController.js';
  */
 
 /**
+ * In-memory high-efficiency TTL cache for computed adherence metrics.
+ * Drastically reduces Firestore queries and CPU cycles under heavy polling/dashboard views.
+ */
+const adherenceCache = new Map();
+const ADHERENCE_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
+/**
+ * Invalidates cached adherence metrics for a specific profile (or all profiles).
+ * @param {string} [profileId] - Profile ID to invalidate; if omitted, clears entire cache.
+ */
+export function invalidateAdherenceCache(profileId) {
+  if (profileId) {
+    for (const key of adherenceCache.keys()) {
+      if (key.startsWith(`${profileId}:`)) {
+        adherenceCache.delete(key);
+      }
+    }
+  } else {
+    adherenceCache.clear();
+  }
+}
+
+/**
+ * Returns current cache size for diagnostics and test verification.
+ */
+export function getAdherenceCacheStats() {
+  return {
+    size: adherenceCache.size,
+    keys: Array.from(adherenceCache.keys()),
+  };
+}
+
+/**
  * Computes adherence metrics from a collection of dose records.
  * Follows clinical adherence standards: future doses are never penalized as missed,
  * and valid clinical skips are excluded from the denominator.
@@ -158,6 +191,13 @@ export async function getAdherenceStats(req, res, next) {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
+    // Check high-speed in-memory TTL cache (prevents duplicate Firestore scans & CPU re-computation)
+    const cacheKey = `${profileId}:${period}`;
+    const cachedEntry = adherenceCache.get(cacheKey);
+    if (cachedEntry && (Date.now() - cachedEntry.timestamp < ADHERENCE_CACHE_TTL_MS)) {
+      return res.json(cachedEntry.payload);
+    }
+
     // Compute start date window to leverage Firestore compound index (profileId + scheduledDate)
     const startDateObj = new Date(today);
     startDateObj.setDate(startDateObj.getDate() - (daysCount + 1));
@@ -217,13 +257,21 @@ export async function getAdherenceStats(req, res, next) {
     const metrics = calculateAdherenceMetrics(doses);
     const trend = buildTrendData(doses, daysCount);
 
-    res.json({
+    const responsePayload = {
       success: true,
       profileId,
       period,
       metrics,
       trend,
+    };
+
+    // Store in TTL cache
+    adherenceCache.set(cacheKey, {
+      timestamp: Date.now(),
+      payload: responsePayload,
     });
+
+    res.json(responsePayload);
   } catch (err) {
     next(err);
   }
@@ -233,4 +281,6 @@ export default {
   calculateAdherenceMetrics,
   buildTrendData,
   getAdherenceStats,
+  invalidateAdherenceCache,
+  getAdherenceCacheStats,
 };

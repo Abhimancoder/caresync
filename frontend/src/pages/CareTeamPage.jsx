@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useProfile } from '../contexts/ProfileContext.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import InviteMemberModal from '../components/collaboration/InviteMemberModal.jsx';
+import ConfirmActionModal from '../components/common/ConfirmActionModal.jsx';
 import api from '../services/api.js';
 import { Users, KeyRound, UserPlus, ShieldCheck, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -12,6 +13,9 @@ export default function CareTeamPage() {
   const [joinPasscode, setJoinPasscode] = useState('');
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinMessage, setJoinMessage] = useState({ text: '', isError: false });
+  const [revokingMember, setRevokingMember] = useState(null);
+  const [revokeLoading, setRevokeLoading] = useState(false);
+  const [revokeError, setRevokeError] = useState('');
 
   const canInvite = currentUser?.role === 'elderly' || currentUser?.role === 'caretaker';
 
@@ -39,13 +43,18 @@ export default function CareTeamPage() {
     }
   };
 
-  const handleRemoveMember = async (memberUserId, memberName) => {
-    if (!window.confirm(`Are you sure you want to revoke access for ${memberName}?`)) return;
+  const handleConfirmRevoke = async () => {
+    if (!revokingMember) return;
     try {
-      await api.delete(`/profiles/${activeProfile?.id}/members/${memberUserId}`);
+      setRevokeLoading(true);
+      setRevokeError('');
+      await api.delete(`/profiles/${activeProfile?.id}/members/${revokingMember.userId}`);
+      setRevokingMember(null);
       await fetchProfiles();
     } catch (err) {
-      alert(err.message);
+      setRevokeError(err.message);
+    } finally {
+      setRevokeLoading(false);
     }
   };
 
@@ -157,7 +166,10 @@ export default function CareTeamPage() {
 
                 {canInvite && member.userId !== currentUser?.uid && (
                   <button
-                    onClick={() => handleRemoveMember(member.userId, member.name)}
+                    onClick={() => {
+                      setRevokeError('');
+                      setRevokingMember(member);
+                    }}
                     aria-label={`Revoke care team access for ${member.name}`}
                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs flex items-center gap-1 transition-colors"
                     title="Revoke access"
@@ -172,6 +184,14 @@ export default function CareTeamPage() {
         </div>
       </div>
 
+      {/* Revoke Error Banner */}
+      {revokeError && (
+        <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>{revokeError}</span>
+        </div>
+      )}
+
       {/* Security Info Card */}
       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-primary-900 flex-shrink-0 mt-0.5" />
@@ -183,12 +203,27 @@ export default function CareTeamPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Invite Modal */}
       <InviteMemberModal
         profileId={activeProfile?.id || 'demo-profile-robert'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchProfiles}
+      />
+
+      {/* Accessible Confirm Revoke Modal */}
+      <ConfirmActionModal
+        isOpen={!!revokingMember}
+        title="Revoke Care Team Access"
+        message={`Are you sure you want to revoke care team access for ${revokingMember?.name} (${revokingMember?.role})? They will immediately lose access to medications, doses, and clinical profiles.`}
+        confirmLabel="Revoke Access"
+        isDestructive={true}
+        isLoading={revokeLoading}
+        onConfirm={handleConfirmRevoke}
+        onClose={() => {
+          setRevokingMember(null);
+          setRevokeError('');
+        }}
       />
     </div>
   );

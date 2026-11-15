@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useProfile } from '../contexts/ProfileContext.jsx';
 import MedicationFormModal from '../components/medications/MedicationFormModal.jsx';
+import ConfirmActionModal from '../components/common/ConfirmActionModal.jsx';
 import api from '../services/api.js';
-import { Pill, Plus, Clock, Stethoscope, Trash2, Calendar, ShieldCheck } from 'lucide-react';
+import { Pill, Plus, Clock, Stethoscope, Trash2, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function MedicationsPage() {
   const { currentUser } = useAuth();
@@ -11,6 +12,9 @@ export default function MedicationsPage() {
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingMed, setDeletingMed] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const canEdit = currentUser?.role === 'caretaker';
 
@@ -30,13 +34,18 @@ export default function MedicationsPage() {
     fetchMedications();
   }, [activeProfile]);
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to deactivate the prescription for ${name}?`)) return;
+  const handleConfirmDelete = async () => {
+    if (!deletingMed) return;
     try {
-      await api.delete(`/medications/${id}`);
+      setActionLoading(true);
+      setActionError('');
+      await api.delete(`/medications/${deletingMed.id}`);
+      setDeletingMed(null);
       await fetchMedications();
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -103,7 +112,10 @@ export default function MedicationsPage() {
                   </div>
                   {canEdit && (
                     <button
-                      onClick={() => handleDelete(med.id, med.name)}
+                      onClick={() => {
+                        setActionError('');
+                        setDeletingMed(med);
+                      }}
                       className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Deactivate prescription"
                       aria-label={`Deactivate prescription for ${med.name}`}
@@ -148,12 +160,35 @@ export default function MedicationsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Action Error Banner */}
+      {actionError && (
+        <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
+      {/* Add Medication Modal */}
       <MedicationFormModal
         profileId={activeProfile?.id || 'demo-profile-robert'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchMedications}
+      />
+
+      {/* Accessible Confirm Deactivation Modal */}
+      <ConfirmActionModal
+        isOpen={!!deletingMed}
+        title="Deactivate Prescription"
+        message={`Are you sure you want to deactivate the prescription for ${deletingMed?.name}? This will archive the medication and halt daily dose generation.`}
+        confirmLabel="Deactivate Prescription"
+        isDestructive={true}
+        isLoading={actionLoading}
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          setDeletingMed(null);
+          setActionError('');
+        }}
       />
     </div>
   );

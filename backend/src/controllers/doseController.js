@@ -2,6 +2,7 @@ import { db } from '../config/firebaseAdmin.js';
 import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, DOSE_STATUS } from '../config/constants.js';
 import { memoryMedications } from './medicationController.js';
+import { invalidateAdherenceCache } from './adherenceController.js';
 
 // In-memory dose records for demo evaluation
 export const memoryDoses = [];
@@ -291,6 +292,9 @@ export async function updateDoseStatus(req, res, next) {
       entityId: id,
       details: `Marked dose of ${doseData.medicationName} (${doseData.dosage}) as ${status.toUpperCase()}${notes ? ` (Note: ${notes})` : ''}.`,
     });
+
+    // Invalidate adherence stats cache for real-time recalculation
+    invalidateAdherenceCache(doseData.profileId);
 
     res.json({
       success: true,

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useProfile } from '../contexts/ProfileContext.jsx';
 import AppointmentFormModal from '../components/appointments/AppointmentFormModal.jsx';
+import ConfirmActionModal from '../components/common/ConfirmActionModal.jsx';
 import api from '../services/api.js';
-import { Calendar, Plus, MapPin, Clock, Stethoscope, Trash2, CheckCircle2 } from 'lucide-react';
+import { Calendar, Plus, MapPin, Clock, Stethoscope, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function AppointmentsPage() {
   const { currentUser } = useAuth();
@@ -12,6 +13,9 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState({ upcoming: [], past: [] });
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cancellingAppt, setCancellingAppt] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const canEdit = currentUser?.role === 'caretaker';
 
@@ -34,13 +38,18 @@ export default function AppointmentsPage() {
     fetchAppointments();
   }, [activeProfile]);
 
-  const handleDelete = async (id, doctorName) => {
-    if (!window.confirm(`Are you sure you want to cancel the appointment with ${doctorName}?`)) return;
+  const handleConfirmCancel = async () => {
+    if (!cancellingAppt) return;
     try {
-      await api.delete(`/appointments/${id}`);
+      setActionLoading(true);
+      setActionError('');
+      await api.delete(`/appointments/${cancellingAppt.id}`);
+      setCancellingAppt(null);
       await fetchAppointments();
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -158,7 +167,10 @@ export default function AppointmentsPage() {
 
                 {canEdit && (
                   <button
-                    onClick={() => handleDelete(appt.id, appt.doctorName)}
+                    onClick={() => {
+                      setActionError('');
+                      setCancellingAppt(appt);
+                    }}
                     aria-label={`Cancel visit with ${appt.doctorName}`}
                     className="text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
                   >
@@ -171,12 +183,35 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Action Error Banner */}
+      {actionError && (
+        <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
+      {/* Form Modal */}
       <AppointmentFormModal
         profileId={activeProfile?.id || 'demo-profile-robert'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchAppointments}
+      />
+
+      {/* Accessible Confirm Cancellation Modal */}
+      <ConfirmActionModal
+        isOpen={!!cancellingAppt}
+        title="Cancel Appointment"
+        message={`Are you sure you want to cancel the clinical appointment with ${cancellingAppt?.doctorName} scheduled for ${cancellingAppt?.appointmentDate} at ${cancellingAppt?.appointmentTime}?`}
+        confirmLabel="Cancel Appointment"
+        isDestructive={true}
+        isLoading={actionLoading}
+        onConfirm={handleConfirmCancel}
+        onClose={() => {
+          setCancellingAppt(null);
+          setActionError('');
+        }}
       />
     </div>
   );

@@ -26,16 +26,25 @@ export default function NotificationBell() {
     return () => clearInterval(interval);
   }, []);
 
-  // Close dropdown on click outside
+  // Close dropdown on click outside or Escape key
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   const markAsRead = async (id) => {
     try {

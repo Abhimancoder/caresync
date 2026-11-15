@@ -3,6 +3,7 @@ import { db } from '../config/firebaseAdmin.js';
 import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, DOSE_STATUS } from '../config/constants.js';
 import { removeUpcomingDosesForMedication } from './doseController.js';
+import { invalidateAdherenceCache } from './adherenceController.js';
 import { validateMedicationInput } from '../utils/validators.js';
 import { apiSuccess, apiCreated, apiError } from '../utils/responseHelper.js';
 
@@ -153,6 +154,9 @@ export async function createMedication(req, res, next) {
       details: `Added new prescription: ${newMedication.name} (${newMedication.dosage} ${newMedication.unit}), ${newMedication.scheduledTimes.join(', ')}.`,
     });
 
+    // Invalidate adherence stats cache for real-time recalculation
+    invalidateAdherenceCache(profileId);
+
     res.status(201).json({
       success: true,
       message: 'Medication added successfully.',
@@ -214,6 +218,9 @@ export async function updateMedication(req, res, next) {
       details: `Updated prescription details for ${updates.name || 'medication'}.`,
     });
 
+    // Invalidate adherence stats cache for real-time recalculation
+    invalidateAdherenceCache(profileId);
+
     res.json({ success: true, message: 'Medication updated successfully.', data: cleanUpdates });
   } catch (err) {
     next(err);
@@ -259,6 +266,9 @@ export async function deleteMedication(req, res, next) {
       entityId: id,
       details: `Deactivated medication prescription: ${medName}.`,
     });
+
+    // Invalidate adherence stats cache for real-time recalculation
+    invalidateAdherenceCache(profileId);
 
     res.json({ success: true, message: `Medication '${medName}' deactivated successfully.` });
   } catch (err) {

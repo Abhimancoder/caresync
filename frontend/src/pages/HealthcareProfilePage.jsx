@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useProfile } from '../contexts/ProfileContext.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import api from '../services/api.js';
-import { UserCheck, PhoneCall, ShieldAlert, Heart, FileText, Edit3, Check } from 'lucide-react';
+import { UserCheck, PhoneCall, ShieldAlert, Heart, FileText, Edit3, Check, AlertCircle } from 'lucide-react';
 
 export default function HealthcareProfilePage() {
   const { activeProfile, fetchProfiles } = useProfile();
@@ -10,17 +10,19 @@ export default function HealthcareProfilePage() {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [medicalNotes, setMedicalNotes] = useState(activeProfile?.medicalNotes || '');
   const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const canEdit = currentUser?.role === 'caretaker';
 
   const handleSaveNotes = async () => {
     try {
       setSaving(true);
+      setActionError('');
       await api.put(`/profiles/${activeProfile?.id}`, { medicalNotes });
       await fetchProfiles();
       setIsEditingNotes(false);
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message || 'Failed to update medical notes.');
     } finally {
       setSaving(false);
     }
@@ -138,6 +140,13 @@ export default function HealthcareProfilePage() {
             </button>
           )}
         </div>
+
+        {actionError && (
+          <div role="alert" className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+            <span>{actionError}</span>
+          </div>
+        )}
 
         {isEditingNotes ? (
           <div className="space-y-3">

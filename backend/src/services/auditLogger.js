@@ -9,7 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 // In-memory fallback if Firestore is running without live credentials
 // Bounded at 1000 items to guarantee O(1) memory bound and prevent memory leaks
 const MAX_MEMORY_LOGS = 1000;
-const memoryLogs = [];
+export const memoryAuditLogs = [];
+const memoryLogs = memoryAuditLogs;
 
 /**
  * Logs an event in the CareSync ecosystem

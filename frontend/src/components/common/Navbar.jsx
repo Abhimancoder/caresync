@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useProfile } from '../../contexts/ProfileContext.jsx';
 import NotificationBell from './NotificationBell.jsx';
@@ -9,6 +9,18 @@ export default function Navbar() {
   const { currentUser, loginWithDemo, logout } = useAuth();
   const { activeProfile } = useProfile();
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && showEmergencyModal) {
+        setShowEmergencyModal(false);
+      }
+    }
+    if (showEmergencyModal) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showEmergencyModal]);
 
   return (
     <>

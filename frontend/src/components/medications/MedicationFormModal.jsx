@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { X, Plus, Trash2, Pill } from 'lucide-react';
 
@@ -17,6 +17,18 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && !loading) {
+        onClose();
+      }
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, loading, onClose]);
 
   if (!isOpen) return null;
 

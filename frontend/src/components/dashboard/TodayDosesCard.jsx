@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useProfile } from '../../contexts/ProfileContext.jsx';
 import { useAccessibility } from '../../contexts/AccessibilityContext.jsx';
+import SkipDoseModal from './SkipDoseModal.jsx';
 import api from '../../services/api.js';
 import { Check, X, Clock, AlertTriangle, Volume2, Pill } from 'lucide-react';
 
@@ -12,6 +13,8 @@ export default function TodayDosesCard({ onDoseUpdated }) {
   const [doses, setDoses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [skipDoseTarget, setSkipDoseTarget] = useState(null);
+  const [actionError, setActionError] = useState('');
 
   const canMarkDose = currentUser?.role === 'elderly' || currentUser?.role === 'caretaker';
 
@@ -38,11 +41,12 @@ export default function TodayDosesCard({ onDoseUpdated }) {
   const handleStatusUpdate = async (doseId, status, notes = '') => {
     try {
       setUpdatingId(doseId);
+      setActionError('');
       await api.patch(`/doses/${doseId}/status`, { status, notes });
       await fetchDoses();
       if (onDoseUpdated) onDoseUpdated();
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message);
     } finally {
       setUpdatingId(null);
     }
@@ -156,8 +160,8 @@ export default function TodayDosesCard({ onDoseUpdated }) {
 
                       <button
                         onClick={() => {
-                          const note = prompt('Reason for skipping dose (optional):', 'Doctor advice or nausea');
-                          handleStatusUpdate(dose.id, 'skipped', note || '');
+                          setActionError('');
+                          setSkipDoseTarget(dose);
                         }}
                         disabled={updatingId === dose.id}
                         aria-label={`Skip scheduled dose for ${dose.medicationName}`}
@@ -191,6 +195,26 @@ export default function TodayDosesCard({ onDoseUpdated }) {
           })}
         </div>
       )}
+
+      {/* Action Error Banner */}
+      {actionError && (
+        <div role="alert" className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
+      {/* Accessible Clinical Skip Dose Dialog */}
+      <SkipDoseModal
+        dose={skipDoseTarget}
+        isOpen={!!skipDoseTarget}
+        onClose={() => setSkipDoseTarget(null)}
+        isLoading={updatingId === skipDoseTarget?.id}
+        onConfirmSkip={async (doseId, reason) => {
+          await handleStatusUpdate(doseId, 'skipped', reason);
+          setSkipDoseTarget(null);
+        }}
+      />
     </div>
   );
 }
