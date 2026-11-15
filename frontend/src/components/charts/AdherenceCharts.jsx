@@ -29,6 +29,14 @@ ChartJS.register(
 );
 
 export function AdherenceLineChart({ trendData = [] }) {
+  if (!trendData || trendData.length === 0) {
+    return (
+      <div className="h-64 sm:h-72 w-full flex items-center justify-center text-xs text-slate-400">
+        No compliance trend data available for this period.
+      </div>
+    );
+  }
+
   const labels = trendData.map(item => item.label);
   const dataPoints = trendData.map(item => item.adherenceRate !== null ? item.adherenceRate : 100);
 
@@ -107,6 +115,14 @@ export function AdherenceDoughnutChart({ metrics }) {
   const taken = metrics?.totalTaken || 0;
   const missed = metrics?.totalMissed || 0;
   const skipped = metrics?.totalSkipped || 0;
+
+  if (taken === 0 && missed === 0 && skipped === 0) {
+    return (
+      <div className="h-64 sm:h-72 w-full flex items-center justify-center text-xs text-slate-400">
+        No dose adherence history recorded yet.
+      </div>
+    );
+  }
 
   const data = {
     labels: ['Taken Doses', 'Missed Doses', 'Clinically Skipped'],

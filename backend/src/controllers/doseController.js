@@ -6,6 +6,92 @@ import { memoryMedications } from './medicationController.js';
 // In-memory dose records for demo evaluation
 export const memoryDoses = [];
 
+// Seed realistic 30-day medication adherence history for Robert Harrison
+function seedHistoricalDoses() {
+  const profileId = 'demo-profile-robert';
+  const today = new Date();
+
+  for (let i = 30; i >= 1; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+
+    const isMissedMorning = (i === 3 || i === 18);
+    const isSkippedEvening = (i === 7);
+
+    // Lisinopril 10mg (Morning 08:00)
+    memoryDoses.push({
+      id: `dose_${profileId}_med-demo-1_${dateStr}_0800`,
+      profileId,
+      medicationId: 'med-demo-1',
+      medicationName: 'Lisinopril',
+      dosage: '10 mg',
+      form: 'tablet',
+      instructions: 'Take 1 tablet every morning with water after breakfast.',
+      scheduledDate: dateStr,
+      scheduledTime: '08:00',
+      scheduledTimestamp: `${dateStr}T08:00:00.000Z`,
+      status: isMissedMorning ? DOSE_STATUS.MISSED : DOSE_STATUS.TAKEN,
+      takenAt: isMissedMorning ? null : `${dateStr}T08:14:00.000Z`,
+      takenByUserId: isMissedMorning ? null : 'demo-elderly-robert',
+      takenByRole: isMissedMorning ? null : 'elderly',
+      notes: isMissedMorning ? 'Dose missed due to morning clinic travel' : '',
+      reminderSent: true,
+      missedAlertSent: isMissedMorning,
+      createdAt: `${dateStr}T00:00:00.000Z`,
+      updatedAt: `${dateStr}T08:14:00.000Z`,
+    });
+
+    // Metformin 500mg (Morning 08:30)
+    memoryDoses.push({
+      id: `dose_${profileId}_med-demo-2_${dateStr}_0830`,
+      profileId,
+      medicationId: 'med-demo-2',
+      medicationName: 'Metformin',
+      dosage: '500 mg',
+      form: 'tablet',
+      instructions: 'Take 1 tablet twice daily with meals.',
+      scheduledDate: dateStr,
+      scheduledTime: '08:30',
+      scheduledTimestamp: `${dateStr}T08:30:00.000Z`,
+      status: DOSE_STATUS.TAKEN,
+      takenAt: `${dateStr}T08:38:00.000Z`,
+      takenByUserId: 'demo-elderly-robert',
+      takenByRole: 'elderly',
+      notes: '',
+      reminderSent: true,
+      missedAlertSent: false,
+      createdAt: `${dateStr}T00:00:00.000Z`,
+      updatedAt: `${dateStr}T08:38:00.000Z`,
+    });
+
+    // Metformin 500mg (Evening 19:30)
+    memoryDoses.push({
+      id: `dose_${profileId}_med-demo-2_${dateStr}_1930`,
+      profileId,
+      medicationId: 'med-demo-2',
+      medicationName: 'Metformin',
+      dosage: '500 mg',
+      form: 'tablet',
+      instructions: 'Take 1 tablet with dinner.',
+      scheduledDate: dateStr,
+      scheduledTime: '19:30',
+      scheduledTimestamp: `${dateStr}T19:30:00.000Z`,
+      status: isSkippedEvening ? DOSE_STATUS.SKIPPED : DOSE_STATUS.TAKEN,
+      takenAt: isSkippedEvening ? null : `${dateStr}T19:42:00.000Z`,
+      takenByUserId: isSkippedEvening ? null : 'demo-caretaker-sarah',
+      takenByRole: isSkippedEvening ? null : 'caretaker',
+      notes: isSkippedEvening ? 'Doctor advised skip due to fasting blood lab work' : '',
+      reminderSent: true,
+      missedAlertSent: false,
+      createdAt: `${dateStr}T00:00:00.000Z`,
+      updatedAt: `${dateStr}T19:42:00.000Z`,
+    });
+  }
+}
+
+seedHistoricalDoses();
+
 /**
  * Helper to build deterministic dose ID to prevent duplicate dose generation
  */
