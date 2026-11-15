@@ -118,6 +118,20 @@ export async function ensureDosesForDate(profileId, dateStr) {
 
   const generated = [];
 
+  // Batch query existing doses for this date to prevent N+1 query overhead
+  const existingDoseIds = new Set();
+  if (db && typeof db.collection === 'function' && !profileId.startsWith('demo-')) {
+    const existingSnap = await db.collection('medicationDoses')
+      .where('profileId', '==', profileId)
+      .where('scheduledDate', '==', dateStr)
+      .get();
+    existingSnap.forEach(d => existingDoseIds.add(d.id));
+  } else {
+    memoryDoses
+      .filter(d => d.profileId === profileId && d.scheduledDate === dateStr)
+      .forEach(d => existingDoseIds.add(d.id));
+  }
+
   for (const med of activeMeds) {
     // Check medication date range
     if (med.startDate && dateStr < med.startDate) continue;
@@ -127,16 +141,7 @@ export async function ensureDosesForDate(profileId, dateStr) {
       const doseId = buildDoseId(profileId, med.id, dateStr, timeStr);
       const scheduledIso = `${dateStr}T${timeStr}:00.000Z`;
 
-      // Check if dose already exists
-      let exists = false;
-      if (db && typeof db.collection === 'function' && !profileId.startsWith('demo-')) {
-        const doseDoc = await db.collection('medicationDoses').doc(doseId).get();
-        exists = doseDoc.exists;
-      } else {
-        exists = memoryDoses.some(d => d.id === doseId);
-      }
-
-      if (!exists) {
+      if (!existingDoseIds.has(doseId)) {
         const newDose = {
           id: doseId,
           profileId,
@@ -164,6 +169,7 @@ export async function ensureDosesForDate(profileId, dateStr) {
         } else {
           memoryDoses.push(newDose);
         }
+        existingDoseIds.add(doseId);
         generated.push(newDose);
       }
     }

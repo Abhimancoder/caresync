@@ -4,7 +4,7 @@ import api from '../../services/api.js';
 import { History, ShieldCheck, Check, Plus, AlertCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function RecentActivityList() {
+export default function RecentActivityList({ refreshTrigger = 0 }) {
   const { activeProfile } = useProfile();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ export default function RecentActivityList() {
       }
     }
     loadLogs();
-  }, [activeProfile]);
+  }, [activeProfile, refreshTrigger]);
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useProfile } from '../../contexts/ProfileContext.jsx';
 import { useAccessibility } from '../../contexts/AccessibilityContext.jsx';
@@ -14,6 +14,10 @@ export default function TodayDosesCard({ onDoseUpdated }) {
   const [updatingId, setUpdatingId] = useState(null);
 
   const canMarkDose = currentUser?.role === 'elderly' || currentUser?.role === 'caretaker';
+
+  const completedCount = useMemo(() => {
+    return doses.filter(d => d.status === 'taken').length;
+  }, [doses]);
 
   const fetchDoses = async () => {
     try {
@@ -62,7 +66,7 @@ export default function TodayDosesCard({ onDoseUpdated }) {
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
-          {doses.filter(d => d.status === 'taken').length} of {doses.length} Completed
+          {completedCount} of {doses.length} Completed
         </span>
       </div>
 

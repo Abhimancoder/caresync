@@ -61,12 +61,12 @@ export default function DashboardPage() {
         {/* Left Column: Today's Schedule (2 cols wide) */}
         <div className="lg:col-span-2 space-y-6">
           <TodayDosesCard onDoseUpdated={() => setRefreshTrigger(prev => prev + 1)} />
-          <RecentActivityList key={`activity-${refreshTrigger}`} />
+          <RecentActivityList refreshTrigger={refreshTrigger} />
         </div>
 
         {/* Right Column: Adherence & Next Appointment */}
         <div className="space-y-6">
-          <QuickAdherenceWidget key={`adherence-${refreshTrigger}`} />
+          <QuickAdherenceWidget refreshTrigger={refreshTrigger} />
           <UpcomingAppointmentsCard />
         </div>
       </div>

@@ -56,18 +56,25 @@ export async function getAuthorizedProfiles(req, res, next) {
     const userId = req.user?.uid;
 
     if (db && typeof db.collection === 'function' && !userId.startsWith('demo-')) {
-      const snap = await db.collection('elderlyProfiles').get();
-      const userProfiles = [];
+      // Direct indexed query for owned elderly profiles to avoid full-collection scan
+      const ownedSnap = await db.collection('elderlyProfiles')
+        .where('elderlyUserId', '==', userId)
+        .get();
 
-      snap.forEach(doc => {
-        const data = doc.data();
-        const isOwner = data.elderlyUserId === userId;
-        const isMember = Array.isArray(data.authorizedMembers) && data.authorizedMembers.some(m => m.userId === userId);
-        if (isOwner || isMember) {
-          userProfiles.push({ id: doc.id, ...data });
-        }
-      });
+      const userProfilesMap = new Map();
+      ownedSnap.forEach(doc => userProfilesMap.set(doc.id, { id: doc.id, ...doc.data() }));
 
+      // Check member affiliations using targeted query
+      try {
+        const memberSnap = await db.collection('elderlyProfiles')
+          .where('authorizedUserIds', 'array-contains', userId)
+          .get();
+        memberSnap.forEach(doc => userProfilesMap.set(doc.id, { id: doc.id, ...doc.data() }));
+      } catch (e) {
+        // Fallback for in-memory or unindexed composite query
+      }
+
+      const userProfiles = Array.from(userProfilesMap.values());
       return res.json({ success: true, count: userProfiles.length, data: userProfiles });
     }
 

@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/firebaseAdmin.js';
 import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, APPOINTMENT_STATUS } from '../config/constants.js';
+import { validateAppointmentInput } from '../utils/validators.js';
+import { apiSuccess, apiCreated, apiError } from '../utils/responseHelper.js';
 
 // In-memory appointments for demo & evaluation
 export const memoryAppointments = [
@@ -119,11 +121,17 @@ export async function createAppointment(req, res, next) {
       notes = '',
     } = req.body;
 
-    if (!profileId || !doctorName || !hospitalClinic || !appointmentDate || !appointmentTime) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required appointment fields: profileId, doctorName, hospitalClinic, appointmentDate, and appointmentTime.',
-      });
+    if (!profileId) {
+      return apiError(res, 'Target profileId is required to schedule appointment.', 400, 'MISSING_PROFILE_ID');
+    }
+
+    const validation = validateAppointmentInput(req.body);
+    if (!validation.isValid) {
+      return apiError(res, validation.errors.join(' '), 400, 'INVALID_APPOINTMENT_INPUT', validation.errors);
+    }
+
+    if (!hospitalClinic) {
+      return apiError(res, 'Hospital or clinic location is required.', 400, 'MISSING_HOSPITAL_CLINIC');
     }
 
     const apptId = uuidv4();

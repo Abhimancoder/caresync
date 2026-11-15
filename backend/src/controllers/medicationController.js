@@ -3,6 +3,8 @@ import { db } from '../config/firebaseAdmin.js';
 import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, DOSE_STATUS } from '../config/constants.js';
 import { removeUpcomingDosesForMedication } from './doseController.js';
+import { validateMedicationInput } from '../utils/validators.js';
+import { apiSuccess, apiCreated, apiError } from '../utils/responseHelper.js';
 
 // In-memory store fallback for demo & evaluation
 export const memoryMedications = [
@@ -106,11 +108,13 @@ export async function createMedication(req, res, next) {
       endDate,
     } = req.body;
 
-    if (!profileId || !name || !dosage || !scheduledTimes || scheduledTimes.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required medication fields: profileId, name, dosage, and at least one scheduledTime.',
-      });
+    if (!profileId) {
+      return apiError(res, 'Target profileId is required to schedule medication.', 400, 'MISSING_PROFILE_ID');
+    }
+
+    const validation = validateMedicationInput(req.body);
+    if (!validation.isValid) {
+      return apiError(res, validation.errors.join(' '), 400, 'INVALID_MEDICATION_INPUT', validation.errors);
     }
 
     const medId = uuidv4();

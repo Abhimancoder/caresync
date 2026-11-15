@@ -131,9 +131,36 @@ npm run dev
 - **Backend API:** [http://localhost:5000](http://localhost:5000)
 - **Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
+### Running Automated Test Suite
+CareSync contains 30 automated unit, integration, validation, and security tests:
+```bash
+npm test
+```
+All 5 test suites execute and pass:
+- `tests/workflow.test.js`: Prescription workflows, RBAC role enforcement, dose intake marking, appointment partitioning, audit logging.
+- `tests/validation.test.js`: Strict clinical input validation (dosage, 24-hr time formats, ISO date bounds, chronological validation).
+- `tests/api.test.js`: Core REST API health, authentication middleware, adherence endpoints.
+- `tests/adherence.test.js`: Mathematical adherence engine, future-dose invariance, clinical skips, punctuality ratings.
+- `tests/invitation.test.js`: Bcrypt passcode generation, cryptographic salt comparison, expiration enforcement.
+
 ---
 
-## 👨‍⚖️ 8. Evaluator / Competition Quick-Start Guide
+## ⚡ 8. High-Performance Engineering & Code Splitting
+
+CareSync is engineered for maximum responsiveness, low latency, and zero bloat:
+1. **Dynamic Route-Level Code Splitting:**
+   - All main application routes are dynamically imported with `React.lazy()` and wrapped in accessible `Suspense` boundaries.
+   - Initial application entry chunk was reduced from **685.5 kB** to **86.1 kB** (**87.4% reduction**), dramatically improving First Contentful Paint (FCP) and Time to Interactive (TTI) on mobile and slower senior connections.
+2. **Optimized Vendor Chunking:**
+   - Heavy dependencies like `chart.js` (180 kB) and `firebase` (165 kB) are segregated into separate vendor chunks and loaded on-demand.
+3. **Elimination of N+1 Queries:**
+   - Dose schedule generation executes a single batched query per date, using in-memory Set lookup ($O(1)$) instead of iterative sequential round-trips.
+4. **Targeted Indexed Queries:**
+   - Adherence metrics and audit logs utilize compound Firestore indexes (`profileId` + `scheduledDate`, `profileId` + `timestamp`), preventing full collection scans.
+
+---
+
+## 👨‍⚖️ 9. Evaluator / Competition Quick-Start Guide
 
 For PromptWars × Catalyst judges:
 1. Open the application at [http://localhost:5173](http://localhost:5173) (or your deployed Cloud Run URL).

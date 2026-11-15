@@ -121,7 +121,13 @@ export async function getAdherenceStats(req, res, next) {
     const profileId = req.query.profileId || req.activeProfileId || 'demo-profile-robert';
     const period = req.query.period || '7d'; // '7d' or '30d'
     const daysCount = period === '30d' ? 30 : 7;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Compute start date window to leverage Firestore compound index (profileId + scheduledDate)
+    const startDateObj = new Date(today);
+    startDateObj.setDate(startDateObj.getDate() - (daysCount + 1));
+    const startDateStr = startDateObj.toISOString().split('T')[0];
 
     // Ensure today's doses are populated in the store
     await ensureDosesForDate(profileId, todayStr);
@@ -131,10 +137,11 @@ export async function getAdherenceStats(req, res, next) {
     if (db && typeof db.collection === 'function' && !profileId.startsWith('demo-')) {
       const snap = await db.collection('medicationDoses')
         .where('profileId', '==', profileId)
+        .where('scheduledDate', '>=', startDateStr)
         .get();
       doses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } else {
-      doses = memoryDoses.filter(d => d.profileId === profileId);
+      doses = memoryDoses.filter(d => d.profileId === profileId && (!d.scheduledDate || d.scheduledDate >= startDateStr));
 
       // If memory doses are empty, generate realistic seed dose data for evaluation
       if (doses.length === 0) {

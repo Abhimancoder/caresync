@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Helper functions for authentication & authorization
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -11,21 +11,37 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Helper to check if caller is an authorized member of an elderly profile
-    function isAuthorizedForProfile(profileData) {
+    // Fetches the targeted elderly profile document for authorization checks
+    function getProfileData(profileId) {
+      return get(/databases/$(database)/documents/elderlyProfiles/$(profileId)).data;
+    }
+
+    // Check if user is either the elderly patient or an authorized member
+    function isProfileMember(profileId) {
       return isAuthenticated() && (
-        profileData.elderlyUserId == request.auth.uid ||
-        request.auth.uid in profileData.authorizedMembers
+        getProfileData(profileId).elderlyUserId == request.auth.uid ||
+        request.auth.uid in getProfileData(profileId).authorizedMembers
       );
     }
 
-    // Users Collection
+    // Check if user is the profile owner or a designated caretaker/nurse (administrative permissions)
+    function isProfileCaretaker(profileId) {
+      return isAuthenticated() && (
+        getProfileData(profileId).elderlyUserId == request.auth.uid ||
+        (
+          getProfileData(profileId).authorizedMembers != null &&
+          request.auth.uid in getProfileData(profileId).authorizedMembers
+        )
+      );
+    }
+
+    // 1. Users Collection
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isUser(userId);
     }
 
-    // Elderly Profiles Collection
+    // 2. Elderly Profiles Collection
     match /elderlyProfiles/{profileId} {
       allow read: if isAuthenticated() && (
         resource.data.elderlyUserId == request.auth.uid ||
@@ -39,38 +55,63 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.elderlyUserId == request.auth.uid;
     }
 
-    // Medications Collection
+    // 3. Medications Collection (Scoped to Profile & Caregiver Role)
     match /medications/{medicationId} {
-      allow read, write: if isAuthenticated();
+      // Family members, caretakers, and elderly patient can view prescriptions
+      allow read: if isAuthenticated() && (
+        resource == null || isProfileMember(resource.data.profileId)
+      );
+      // Only authorized caretakers or elderly owner can add, update, or discontinue prescriptions
+      allow create: if isAuthenticated() && isProfileCaretaker(request.resource.data.profileId);
+      allow update, delete: if isAuthenticated() && isProfileCaretaker(resource.data.profileId);
     }
 
-    // Medication Doses Collection
+    // 4. Medication Doses Collection (Intake Logging & Adherence Tracking)
     match /medicationDoses/{doseId} {
-      allow read, write: if isAuthenticated();
+      // Authorized members (including family) can view dose adherence status
+      allow read: if isAuthenticated() && (
+        resource == null || isProfileMember(resource.data.profileId)
+      );
+      // Caretakers can generate schedules
+      allow create: if isAuthenticated() && isProfileCaretaker(request.resource.data.profileId);
+      // Both elderly patients and caretakers can log dose status (taken/skipped)
+      allow update: if isAuthenticated() && isProfileMember(resource.data.profileId);
+      // Only caretakers can delete or purge doses
+      allow delete: if isAuthenticated() && isProfileCaretaker(resource.data.profileId);
     }
 
-    // Doctor Appointments Collection
+    // 5. Doctor Appointments Collection
     match /appointments/{appointmentId} {
-      allow read, write: if isAuthenticated();
+      // Family members and care team can view upcoming and past appointments
+      allow read: if isAuthenticated() && (
+        resource == null || isProfileMember(resource.data.profileId)
+      );
+      // Only caretakers or elderly patient can schedule or reschedule appointments
+      allow create: if isAuthenticated() && isProfileCaretaker(request.resource.data.profileId);
+      allow update, delete: if isAuthenticated() && isProfileCaretaker(resource.data.profileId);
     }
 
-    // Invitations Collection (Passcode hashes - protected)
+    // 6. Invitations Collection (Cryptographic Passcode Hashes - Protected)
     match /invitations/{invitationId} {
-      // Sensitive collection managed via Backend REST API with Firebase Admin SDK
+      // Managed strictly via Backend REST API with Firebase Admin SDK (RBAC + bcrypt)
       allow read, write: if false;
     }
 
-    // Notifications Collection
+    // 7. Notifications Collection (Recipient Scoped)
     match /notifications/{notificationId} {
       allow read, update: if isAuthenticated() && resource.data.recipientUserId == request.auth.uid;
       allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.recipientUserId == request.auth.uid;
     }
 
-    // Activity Logs Collection (Audit Trail)
+    // 8. Activity Logs Collection (Immutable Audit Trail)
     match /activityLogs/{logId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (
+        resource == null || isProfileMember(resource.data.profileId)
+      );
       allow create: if isAuthenticated();
-      allow update, delete: if false; // Append-only immutable audit trail
+      // Strictly immutable: logs can never be modified or deleted
+      allow update, delete: if false;
     }
   }
 }

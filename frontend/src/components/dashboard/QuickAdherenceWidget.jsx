@@ -4,7 +4,7 @@ import api from '../../services/api.js';
 import { BarChart3, TrendingUp, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function QuickAdherenceWidget() {
+export default function QuickAdherenceWidget({ refreshTrigger = 0 }) {
   const { activeProfile } = useProfile();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ export default function QuickAdherenceWidget() {
       }
     }
     loadStats();
-  }, [activeProfile]);
+  }, [activeProfile, refreshTrigger]);
 
   const metrics = stats?.metrics || {
     adherenceRate: 94.5,
