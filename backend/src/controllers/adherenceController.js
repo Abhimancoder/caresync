@@ -1,6 +1,6 @@
 import { db } from '../config/firebaseAdmin.js';
 import { DOSE_STATUS } from '../config/constants.js';
-import { memoryDoses } from './doseController.js';
+import { memoryDoses, ensureDosesForDate } from './doseController.js';
 
 /**
  * CareSync Mathematical Adherence Engine
@@ -96,7 +96,7 @@ export function buildTrendData(doses = [], daysCount = 7, referenceDate = new Da
     const pastDayTotal = dayTaken + dayMissed;
     const dayRate = pastDayTotal > 0
       ? Math.round((dayTaken / pastDayTotal) * 100)
-      : (dayDoses.length > 0 && i === 0 ? 100 : (dayDoses.length === 0 ? null : 100));
+      : 100; // If no missed doses, default to 100% compliance
 
     trend.push({
       date: dateStr,
@@ -121,6 +121,10 @@ export async function getAdherenceStats(req, res, next) {
     const profileId = req.query.profileId || req.activeProfileId || 'demo-profile-robert';
     const period = req.query.period || '7d'; // '7d' or '30d'
     const daysCount = period === '30d' ? 30 : 7;
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Ensure today's doses are populated in the store
+    await ensureDosesForDate(profileId, todayStr);
 
     let doses = [];
 
