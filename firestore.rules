@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper to check if caller is an authorized member of an elderly profile
+    function isAuthorizedForProfile(profileData) {
+      return isAuthenticated() && (
+        profileData.elderlyUserId == request.auth.uid ||
+        request.auth.uid in profileData.authorizedMembers
+      );
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isUser(userId);
+    }
+
+    // Elderly Profiles Collection
+    match /elderlyProfiles/{profileId} {
+      allow read: if isAuthenticated() && (
+        resource.data.elderlyUserId == request.auth.uid ||
+        request.auth.uid in resource.data.authorizedMembers
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        resource.data.elderlyUserId == request.auth.uid ||
+        request.auth.uid in resource.data.authorizedMembers
+      );
+      allow delete: if isAuthenticated() && resource.data.elderlyUserId == request.auth.uid;
+    }
+
+    // Medications Collection
+    match /medications/{medicationId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Medication Doses Collection
+    match /medicationDoses/{doseId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Doctor Appointments Collection
+    match /appointments/{appointmentId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Invitations Collection (Passcode hashes - protected)
+    match /invitations/{invitationId} {
+      // Sensitive collection managed via Backend REST API with Firebase Admin SDK
+      allow read, write: if false;
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read, update: if isAuthenticated() && resource.data.recipientUserId == request.auth.uid;
+      allow create: if isAuthenticated();
+    }
+
+    // Activity Logs Collection (Audit Trail)
+    match /activityLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Append-only immutable audit trail
+    }
+  }
+}
