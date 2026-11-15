@@ -57,7 +57,7 @@ export default function TodayDosesCard({ onDoseUpdated }) {
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center" aria-hidden="true">
             <Pill className="w-5 h-5" />
           </div>
           <div>
@@ -71,7 +71,7 @@ export default function TodayDosesCard({ onDoseUpdated }) {
       </div>
 
       {loading ? (
-        <div className="py-10 text-center text-slate-400 text-sm">Loading today's schedule...</div>
+        <div className="py-10 text-center text-slate-400 text-sm" role="status">Loading today's schedule...</div>
       ) : doses.length === 0 ? (
         <div className="py-8 text-center text-slate-500 text-sm">
           No medication doses scheduled for today.
@@ -99,7 +99,7 @@ export default function TodayDosesCard({ onDoseUpdated }) {
               >
                 {/* Dose details */}
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5">
+                  <div className="mt-0.5" aria-hidden="true">
                     {isTaken && <Check className="w-5 h-5 text-emerald-600" />}
                     {isMissed && <AlertTriangle className="w-5 h-5 text-red-600" />}
                     {isSkipped && <X className="w-5 h-5 text-amber-600" />}
@@ -136,9 +136,9 @@ export default function TodayDosesCard({ onDoseUpdated }) {
                     onClick={() => handleSpeakDose(dose)}
                     className="p-2 rounded-lg text-slate-500 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                     title="Read instructions aloud"
-                    aria-label={`Read ${dose.medicationName} instructions aloud`}
+                    aria-label={`Read instructions for ${dose.medicationName} aloud`}
                   >
-                    <Volume2 className="w-4 h-4" />
+                    <Volume2 className="w-4 h-4" aria-hidden="true" />
                   </button>
 
                   {/* Dose Status Actions */}
@@ -147,9 +147,10 @@ export default function TodayDosesCard({ onDoseUpdated }) {
                       <button
                         onClick={() => handleStatusUpdate(dose.id, 'taken')}
                         disabled={updatingId === dose.id}
+                        aria-label={`Mark ${dose.medicationName} ${dose.dosage} scheduled at ${dose.scheduledTime} as taken`}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Mark Taken</span>
                       </button>
 
@@ -159,6 +160,7 @@ export default function TodayDosesCard({ onDoseUpdated }) {
                           handleStatusUpdate(dose.id, 'skipped', note || '');
                         }}
                         disabled={updatingId === dose.id}
+                        aria-label={`Skip scheduled dose for ${dose.medicationName}`}
                         className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors"
                       >
                         Skip
@@ -168,13 +170,13 @@ export default function TodayDosesCard({ onDoseUpdated }) {
 
                   {isTaken && (
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" /> Taken
+                      <Check className="w-3.5 h-3.5" aria-hidden="true" /> Taken
                     </span>
                   )}
 
                   {isMissed && (
                     <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-lg flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5" /> Missed
+                      <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" /> Missed
                     </span>
                   )}
 

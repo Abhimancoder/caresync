@@ -42,17 +42,18 @@ export default function ActivityLogPage() {
 
         <button
           onClick={fetchLogs}
+          aria-label="Refresh audit activity log"
           className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           title="Refresh audit feed"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
         </button>
       </div>
 
       {/* Log Feed */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
         {loading ? (
-          <div className="py-12 text-center text-slate-400 text-xs">Loading activity stream...</div>
+          <div className="py-12 text-center text-slate-400 text-xs" role="status">Loading activity stream...</div>
         ) : logs.length === 0 ? (
           <div className="py-12 text-center text-slate-400 text-xs">No activity entries recorded yet.</div>
         ) : (
@@ -65,7 +66,7 @@ export default function ActivityLogPage() {
 
               return (
                 <div key={log.id} className="py-4 flex items-start gap-4 text-xs">
-                  <div className="mt-0.5 p-2 rounded-xl bg-slate-100 flex-shrink-0">
+                  <div className="mt-0.5 p-2 rounded-xl bg-slate-100 flex-shrink-0" aria-hidden="true">
                     {isTaken && <Check className="w-4 h-4 text-emerald-600" />}
                     {isAdded && <Plus className="w-4 h-4 text-blue-600" />}
                     {isMissed && <AlertCircle className="w-4 h-4 text-red-600" />}

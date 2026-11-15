@@ -41,17 +41,18 @@ export default function QuickAdherenceWidget({ refreshTrigger = 0 }) {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center" aria-hidden="true">
               <TrendingUp className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">7-Day Adherence Overview</h3>
           </div>
           <Link
             to="/adherence"
+            aria-label="View detailed adherence charts and compliance analytics"
             className="text-xs text-primary-900 hover:text-blue-700 font-semibold flex items-center gap-1"
           >
             <span>Detailed Charts</span>
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>
 

@@ -56,9 +56,9 @@ export default function HealthcareProfilePage() {
       {/* Allergies & Emergency Contacts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Allergies Card */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm" role="region" aria-label="Allergies Information">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center" aria-hidden="true">
               <ShieldAlert className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Documented Drug Allergies</h3>
@@ -70,7 +70,7 @@ export default function HealthcareProfilePage() {
                 key={idx}
                 className="px-3 py-1.5 rounded-xl bg-red-50 text-red-800 border border-red-200 text-xs font-bold flex items-center gap-1.5"
               >
-                <span>⚠️</span>
+                <span aria-hidden="true">⚠️</span>
                 <span>{allergy}</span>
               </span>
             ))}
@@ -82,9 +82,9 @@ export default function HealthcareProfilePage() {
         </div>
 
         {/* Emergency Contacts Card */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm" role="region" aria-label="Emergency Contacts Directory">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center" aria-hidden="true">
               <PhoneCall className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Emergency Contacts</h3>
@@ -99,9 +99,10 @@ export default function HealthcareProfilePage() {
                 </div>
                 <a
                   href={`tel:${contact.phone}`}
+                  aria-label={`Call emergency contact ${contact.name} at ${contact.phone}`}
                   className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-xs transition-colors"
                 >
-                  <PhoneCall className="w-3 h-3" />
+                  <PhoneCall className="w-3 h-3" aria-hidden="true" />
                   <span>{contact.phone}</span>
                 </a>
               </div>
@@ -111,10 +112,10 @@ export default function HealthcareProfilePage() {
       </div>
 
       {/* Clinical Notes & Health Summary */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm" role="region" aria-label="Clinical Healthcare Notes">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center" aria-hidden="true">
               <FileText className="w-4 h-4" />
             </div>
             <div>
@@ -129,9 +130,10 @@ export default function HealthcareProfilePage() {
                 setMedicalNotes(activeProfile?.medicalNotes || '');
                 setIsEditingNotes(true);
               }}
+              aria-label="Edit clinical healthcare notes"
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Edit Notes</span>
             </button>
           )}
@@ -142,6 +144,7 @@ export default function HealthcareProfilePage() {
             <textarea
               rows="4"
               value={medicalNotes}
+              aria-label="Clinical healthcare observation notes"
               onChange={(e) => setMedicalNotes(e.target.value)}
               className="w-full p-3 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="Record health observations, dietary needs, or condition notes..."
@@ -156,9 +159,10 @@ export default function HealthcareProfilePage() {
               <button
                 onClick={handleSaveNotes}
                 disabled={saving}
+                aria-label="Save clinical healthcare notes"
                 className="flex items-center gap-1 px-4 py-1.5 bg-primary-900 text-white rounded-xl text-xs font-bold shadow-xs"
               >
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{saving ? 'Saving...' : 'Save Notes'}</span>
               </button>
             </div>

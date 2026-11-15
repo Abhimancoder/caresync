@@ -28,7 +28,7 @@ export default function RecentActivityList({ refreshTrigger = 0 }) {
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center" aria-hidden="true">
             <History className="w-4 h-4" />
           </div>
           <div>
@@ -38,15 +38,16 @@ export default function RecentActivityList({ refreshTrigger = 0 }) {
         </div>
         <Link
           to="/activity-log"
+          aria-label="View complete audit activity log"
           className="text-xs text-primary-900 hover:text-blue-700 font-semibold flex items-center gap-1"
         >
           <span>Full Audit Log</span>
-          <ArrowRight className="w-3 h-3" />
+          <ArrowRight className="w-3 h-3" aria-hidden="true" />
         </Link>
       </div>
 
       {loading ? (
-        <div className="py-6 text-center text-slate-400 text-xs">Loading activity stream...</div>
+        <div className="py-6 text-center text-slate-400 text-xs" role="status">Loading activity stream...</div>
       ) : logs.length === 0 ? (
         <div className="py-6 text-center text-slate-400 text-xs">No recorded events yet.</div>
       ) : (
@@ -58,7 +59,7 @@ export default function RecentActivityList({ refreshTrigger = 0 }) {
 
             return (
               <div key={log.id} className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 flex items-start gap-3 text-xs">
-                <div className="mt-0.5 flex-shrink-0">
+                <div className="mt-0.5 flex-shrink-0" aria-hidden="true">
                   {isTaken && <Check className="w-4 h-4 text-emerald-600" />}
                   {isAdded && <Plus className="w-4 h-4 text-blue-600" />}
                   {isMissed && <AlertCircle className="w-4 h-4 text-red-600" />}

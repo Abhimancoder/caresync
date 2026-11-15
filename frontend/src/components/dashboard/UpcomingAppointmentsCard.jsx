@@ -31,17 +31,18 @@ export default function UpcomingAppointmentsCard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center" aria-hidden="true">
               <Calendar className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Upcoming Medical Visit</h3>
           </div>
           <Link
             to="/appointments"
+            aria-label="View all scheduled medical appointments"
             className="text-xs text-primary-900 hover:text-blue-700 font-semibold flex items-center gap-1"
           >
             <span>View All</span>
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>
 
