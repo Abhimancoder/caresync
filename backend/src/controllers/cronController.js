@@ -54,11 +54,14 @@ export async function processReminders(req, res, next) {
     const cronSecretHeader = req.headers['x-cron-secret'] || req.query.secret;
     const expectedSecret = process.env.CRON_SECRET || 'caresync-cloud-scheduler-secret-2026';
 
-    // Verify secret for security
-    if (process.env.NODE_ENV === 'production' && cronSecretHeader !== expectedSecret) {
+    // Allow execution if authorized via Cloud Scheduler secret OR authenticated user session
+    const hasAuthToken = req.headers.authorization && req.headers.authorization.startsWith('Bearer ');
+    const isSecretValid = cronSecretHeader && cronSecretHeader === expectedSecret;
+
+    if (process.env.NODE_ENV === 'production' && !isSecretValid && !hasAuthToken) {
       return res.status(403).json({
         success: false,
-        error: 'Unauthorized cron trigger. Invalid X-Cron-Secret header.',
+        error: 'Unauthorized cron trigger. Must provide X-Cron-Secret header or Bearer authorization.',
         code: 'CRON_UNAUTHORIZED',
       });
     }
