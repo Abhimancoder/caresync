@@ -47,6 +47,12 @@ function ProtectedLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-900 focus:text-white focus:rounded-lg focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 font-bold text-sm"
+      >
+        Skip to main content
+      </a>
       <AccessibilityBar />
       <Navbar />
       <div className="flex-1 flex max-w-7xl w-full mx-auto">

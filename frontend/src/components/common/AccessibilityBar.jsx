@@ -6,16 +6,20 @@ export default function AccessibilityBar() {
   const { fontScale, setFontScale, isHighContrast, toggleHighContrast, isSpeaking, stopSpeaking } = useAccessibility();
 
   return (
-    <div className="bg-slate-900 text-slate-100 py-1.5 px-4 text-xs flex flex-wrap items-center justify-between border-b border-slate-800 transition-all">
+    <div
+      role="region"
+      aria-label="Senior Accessibility Suite"
+      className="bg-slate-900 text-slate-100 py-1.5 px-4 text-xs flex flex-wrap items-center justify-between border-b border-slate-800 transition-all"
+    >
       <div className="flex items-center gap-2 font-medium">
-        <span className="flex h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span className="flex h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
         <span className="text-slate-300">Senior Accessibility Suite:</span>
       </div>
 
       <div className="flex items-center gap-4 flex-wrap">
         {/* Font Size Scaling */}
-        <div className="flex items-center gap-1">
-          <Type className="w-3.5 h-3.5 text-slate-400 mr-1" />
+        <div className="flex items-center gap-1" role="group" aria-label="Text size scaling options">
+          <Type className="w-3.5 h-3.5 text-slate-400 mr-1" aria-hidden="true" />
           <span className="text-slate-400 mr-1">Text:</span>
           {[
             { label: 'Normal', scale: 1 },
@@ -26,6 +30,8 @@ export default function AccessibilityBar() {
             <button
               key={item.scale}
               onClick={() => setFontScale(item.scale)}
+              aria-pressed={fontScale === item.scale}
+              aria-label={`Set font size to ${item.label}`}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                 fontScale === item.scale
                   ? 'bg-blue-600 text-white shadow-sm font-semibold'
@@ -40,6 +46,8 @@ export default function AccessibilityBar() {
         {/* High Contrast Toggle */}
         <button
           onClick={toggleHighContrast}
+          aria-pressed={isHighContrast}
+          aria-label={isHighContrast ? 'Disable high contrast mode' : 'Enable high contrast mode'}
           className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
             isHighContrast
               ? 'bg-amber-400 text-slate-950 font-bold'
@@ -47,7 +55,7 @@ export default function AccessibilityBar() {
           }`}
           title="Toggle High Contrast Mode for improved visibility"
         >
-          <Eye className="w-3.5 h-3.5" />
+          <Eye className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{isHighContrast ? 'High Contrast: ON' : 'High Contrast: OFF'}</span>
         </button>
 
@@ -55,9 +63,10 @@ export default function AccessibilityBar() {
         {isSpeaking && (
           <button
             onClick={stopSpeaking}
+            aria-label="Stop audio speech playback"
             className="flex items-center gap-1 px-2 py-0.5 rounded bg-red-600 text-white text-[11px] font-medium animate-pulse"
           >
-            <VolumeX className="w-3.5 h-3.5" />
+            <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Stop Audio</span>
           </button>
         )}

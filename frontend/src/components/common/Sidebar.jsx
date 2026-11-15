@@ -70,14 +70,17 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col justify-between py-6 px-4 shadow-sm min-h-[calc(100vh-4rem)]">
+    <aside
+      className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col justify-between py-6 px-4 shadow-sm min-h-[calc(100vh-4rem)]"
+      aria-label="Sidebar Navigation"
+    >
       <div className="space-y-6">
         {/* Navigation Section */}
         <div>
           <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
             Care Management
           </p>
-          <nav className="space-y-1">
+          <nav className="space-y-1" aria-label="Care Management Navigation">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (

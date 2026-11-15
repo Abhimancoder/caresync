@@ -17,8 +17,8 @@ export default function Navbar() {
           
           {/* Logo & Platform Name */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 group focus:outline-none">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-900 to-blue-700 flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform">
+            <Link to="/" className="flex items-center gap-2 group focus:outline-none" aria-label="CareSync Healthcare Home">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-900 to-blue-700 flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform" aria-hidden="true">
                 <HeartPulse className="w-6 h-6 text-teal-400" />
               </div>
               <div>
@@ -33,16 +33,18 @@ export default function Navbar() {
           </div>
 
           {/* Active Profile Info */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50/80 rounded-full border border-blue-100 text-xs font-medium text-slate-700">
-            <span className="flex h-2 w-2 rounded-full bg-teal-500"></span>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50/80 rounded-full border border-blue-100 text-xs font-medium text-slate-700" role="status" aria-label="Active Profile Information">
+            <span className="flex h-2 w-2 rounded-full bg-teal-500" aria-hidden="true"></span>
             <span>Active Senior: <strong>{activeProfile?.fullName || 'Robert Harrison'}</strong> ({activeProfile?.age || 78} yrs)</span>
           </div>
 
           {/* Quick Role Switcher for Evaluators */}
-          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold" role="group" aria-label="Switch User Persona Role">
             <span className="text-[11px] text-slate-500 px-2">Role:</span>
             <button
               onClick={() => loginWithDemo('elderly')}
+              aria-pressed={currentUser?.role === 'elderly'}
+              aria-label="Switch role to Senior Patient"
               className={`px-2.5 py-1 rounded-lg transition-all ${
                 currentUser?.role === 'elderly'
                   ? 'bg-blue-600 text-white shadow-sm'
@@ -53,6 +55,8 @@ export default function Navbar() {
             </button>
             <button
               onClick={() => loginWithDemo('caretaker')}
+              aria-pressed={currentUser?.role === 'caretaker'}
+              aria-label="Switch role to Nurse Caretaker"
               className={`px-2.5 py-1 rounded-lg transition-all ${
                 currentUser?.role === 'caretaker'
                   ? 'bg-teal-600 text-white shadow-sm'
@@ -63,6 +67,8 @@ export default function Navbar() {
             </button>
             <button
               onClick={() => loginWithDemo('family')}
+              aria-pressed={currentUser?.role === 'family'}
+              aria-label="Switch role to Family Member"
               className={`px-2.5 py-1 rounded-lg transition-all ${
                 currentUser?.role === 'family'
                   ? 'bg-indigo-600 text-white shadow-sm'
@@ -78,10 +84,11 @@ export default function Navbar() {
             {/* Quick Emergency SOS Button */}
             <button
               onClick={() => setShowEmergencyModal(true)}
+              aria-label="Open emergency contacts dialog"
               className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-md shadow-red-600/20 active:scale-95 transition-all"
               title="View Emergency Contacts"
             >
-              <PhoneCall className="w-3.5 h-3.5 animate-bounce" />
+              <PhoneCall className="w-3.5 h-3.5 animate-bounce" aria-hidden="true" />
               <span>SOS Emergency</span>
             </button>
 
@@ -96,10 +103,11 @@ export default function Navbar() {
               </div>
               <button
                 onClick={logout}
+                aria-label="Sign Out"
                 className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                 title="Sign Out"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -110,12 +118,17 @@ export default function Navbar() {
 
       {/* Emergency Contacts Modal */}
       {showEmergencyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="emergency-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+        >
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-red-500">
             <div className="flex items-center gap-3 text-red-600 mb-4">
-              <AlertCircle className="w-8 h-8" />
+              <AlertCircle className="w-8 h-8" aria-hidden="true" />
               <div>
-                <h3 className="text-lg font-black text-slate-900">Emergency Contacts</h3>
+                <h3 id="emergency-modal-title" className="text-lg font-black text-slate-900">Emergency Contacts</h3>
                 <p className="text-xs text-slate-500">For {activeProfile?.fullName || 'Senior'}</p>
               </div>
             </div>
@@ -129,9 +142,10 @@ export default function Navbar() {
                   </div>
                   <a
                     href={`tel:${contact.phone}`}
+                    aria-label={`Call ${contact.name} at ${contact.phone}`}
                     className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm"
                   >
-                    <PhoneCall className="w-3.5 h-3.5" />
+                    <PhoneCall className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{contact.phone}</span>
                   </a>
                 </div>
@@ -144,6 +158,7 @@ export default function Navbar() {
                 </div>
                 <a
                   href="tel:911"
+                  aria-label="Call National Emergency Services at 911 or 112"
                   className="bg-slate-900 hover:bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold"
                 >
                   Dial 911 / 112
@@ -153,6 +168,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setShowEmergencyModal(false)}
+              aria-label="Close emergency contacts dialog"
               className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-semibold text-sm transition-colors"
             >
               Close

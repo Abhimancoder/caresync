@@ -41,30 +41,44 @@ export default function AppointmentFormModal({ profileId, isOpen, onClose, onSuc
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="appointment-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
       <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center" aria-hidden="true">
               <Calendar className="w-4 h-4" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">Schedule Doctor Appointment</h3>
+            <h3 id="appointment-modal-title" className="text-base font-bold text-slate-900">
+              Schedule Doctor Appointment
+            </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            aria-label="Close schedule appointment modal"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
+          <div role="alert" className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Doctor / Specialist Name *</label>
+            <label htmlFor="appt-doctor-name" className="block font-semibold text-slate-700 mb-1">
+              Doctor / Specialist Name *
+            </label>
             <input
+              id="appt-doctor-name"
               type="text"
               required
               placeholder="e.g. Dr. Angela Martinez, MD"
@@ -75,8 +89,11 @@ export default function AppointmentFormModal({ profileId, isOpen, onClose, onSuc
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Medical Specialty</label>
+            <label htmlFor="appt-specialty" className="block font-semibold text-slate-700 mb-1">
+              Medical Specialty
+            </label>
             <input
+              id="appt-specialty"
               type="text"
               placeholder="e.g. Cardiology, Endocrinology, Geriatrics"
               value={formData.specialty}
@@ -86,8 +103,11 @@ export default function AppointmentFormModal({ profileId, isOpen, onClose, onSuc
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Hospital / Clinic Location *</label>
+            <label htmlFor="appt-clinic" className="block font-semibold text-slate-700 mb-1">
+              Hospital / Clinic Location *
+            </label>
             <input
+              id="appt-clinic"
               type="text"
               required
               placeholder="e.g. St. Jude Health Center, Suite 402"
@@ -99,8 +119,11 @@ export default function AppointmentFormModal({ profileId, isOpen, onClose, onSuc
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Appointment Date *</label>
+              <label htmlFor="appt-date" className="block font-semibold text-slate-700 mb-1">
+                Appointment Date *
+              </label>
               <input
+                id="appt-date"
                 type="date"
                 required
                 value={formData.appointmentDate}
@@ -109,8 +132,11 @@ export default function AppointmentFormModal({ profileId, isOpen, onClose, onSuc
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Appointment Time *</label>
+              <label htmlFor="appt-time" className="block font-semibold text-slate-700 mb-1">
+                Appointment Time *
+              </label>
               <input
+                id="appt-time"
                 type="time"
                 required
                 value={formData.appointmentTime}
@@ -121,8 +147,11 @@ export default function AppointmentFormModal({ profileId, isOpen, onClose, onSuc
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Preparation Notes / Instructions</label>
+            <label htmlFor="appt-notes" className="block font-semibold text-slate-700 mb-1">
+              Preparation Notes / Instructions
+            </label>
             <textarea
+              id="appt-notes"
               rows="2"
               placeholder="e.g. Fasting 8 hours prior. Bring recent blood pressure log and current prescription bottles."
               value={formData.notes}

@@ -75,9 +75,10 @@ export default function ElderlyChecklistPage() {
 
           <button
             onClick={handleReadFullSchedule}
+            aria-label="Read today's medication schedule aloud using speech synthesis"
             className="flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-sm sm:text-base shadow-md transition-all active:scale-95"
           >
-            <Volume2 className="w-5 h-5" />
+            <Volume2 className="w-5 h-5" aria-hidden="true" />
             <span>{isSpeaking ? 'Listening...' : 'Read My Schedule Aloud'}</span>
           </button>
         </div>
@@ -153,9 +154,10 @@ export default function ElderlyChecklistPage() {
                     <button
                       onClick={() => handleMarkTaken(dose)}
                       disabled={updatingId === dose.id}
+                      aria-label={`Mark ${dose.medicationName} ${dose.dosage} scheduled for ${dose.scheduledTime} as taken`}
                       className="w-full md:w-auto px-8 py-5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xl rounded-2xl shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-3 transition-all"
                     >
-                      <Check className="w-7 h-7" />
+                      <Check className="w-7 h-7" aria-hidden="true" />
                       <span>{updatingId === dose.id ? 'Saving...' : 'I Took This Medicine'}</span>
                     </button>
                   )}

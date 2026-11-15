@@ -81,9 +81,11 @@ export default function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none transition-colors"
-        aria-label="View notifications"
+        aria-label={`View notifications, ${unreadCount} unread`}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-5 h-5" aria-hidden="true" />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -92,7 +94,11 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div
+          role="dialog"
+          aria-label="Notifications Center"
+          className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+        >
           {/* Header */}
           <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div>
@@ -103,14 +109,19 @@ export default function NotificationBell() {
               onClick={fetchNotifications}
               className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-200"
               title="Refresh alerts"
+              aria-label="Refresh alerts"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
 
           {/* Action Feedback Banner */}
           {actionFeedback && (
-            <div className="bg-blue-50 text-blue-800 text-xs px-3 py-2 border-b border-blue-200 flex items-center justify-between">
+            <div
+              role="status"
+              aria-live="polite"
+              className="bg-blue-50 text-blue-800 text-xs px-3 py-2 border-b border-blue-200 flex items-center justify-between"
+            >
               <span>{actionFeedback}</span>
             </div>
           )}

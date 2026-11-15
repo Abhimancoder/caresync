@@ -59,17 +59,18 @@ export default function MedicationsPage() {
         {canEdit && (
           <button
             onClick={() => setIsModalOpen(true)}
+            aria-label="Add new prescription"
             className="flex items-center gap-2 px-4 py-2.5 bg-primary-900 hover:bg-primary-800 text-white rounded-xl text-xs font-bold shadow-md shadow-primary-900/10 transition-all self-start sm:self-auto"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             <span>Add Prescription</span>
           </button>
         )}
       </div>
 
       {/* Medical Safety Disclaimer */}
-      <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl flex items-start gap-3 text-xs text-blue-900">
-        <ShieldCheck className="w-4 h-4 text-blue-700 flex-shrink-0 mt-0.5" />
+      <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl flex items-start gap-3 text-xs text-blue-900" role="note" aria-label="Clinical Guardrail Note">
+        <ShieldCheck className="w-4 h-4 text-blue-700 flex-shrink-0 mt-0.5" aria-hidden="true" />
         <span>
           <strong>Clinical Guardrail:</strong> CareSync is a coordination and reminder tool. All medications and dosages are displayed strictly as entered by authorized caregivers and physicians. Never adjust prescription dosages without physician guidance.
         </span>
@@ -77,10 +78,10 @@ export default function MedicationsPage() {
 
       {/* Medication Cards List */}
       {loading ? (
-        <div className="py-12 text-center text-slate-400 text-sm">Loading prescriptions...</div>
+        <div className="py-12 text-center text-slate-400 text-sm" role="status">Loading prescriptions...</div>
       ) : medications.length === 0 ? (
         <div className="bg-white p-12 rounded-2xl text-center border border-slate-200">
-          <Pill className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <Pill className="w-10 h-10 text-slate-300 mx-auto mb-3" aria-hidden="true" />
           <h3 className="text-base font-bold text-slate-800">No active medications</h3>
           <p className="text-xs text-slate-500 mt-1">Click "Add Prescription" above to record a new medicine.</p>
         </div>
@@ -105,27 +106,28 @@ export default function MedicationsPage() {
                       onClick={() => handleDelete(med.id, med.name)}
                       className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Deactivate prescription"
+                      aria-label={`Deactivate prescription for ${med.name}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
 
                 <div className="space-y-2 text-xs text-slate-600 mb-4">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
                     <span>Times: <strong>{(med.scheduledTimes || []).join(', ')}</strong></span>
                   </div>
 
                   {med.prescribingDoctor && (
                     <div className="flex items-center gap-2">
-                      <Stethoscope className="w-3.5 h-3.5 text-slate-400" />
+                      <Stethoscope className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
                       <span className="truncate">Doctor: {med.prescribingDoctor}</span>
                     </div>
                   )}
 
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
                     <span>Started: {med.startDate || 'Recent'}</span>
                   </div>
                 </div>

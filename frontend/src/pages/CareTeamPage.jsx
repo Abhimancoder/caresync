@@ -70,18 +70,19 @@ export default function CareTeamPage() {
         {canInvite && (
           <button
             onClick={() => setIsModalOpen(true)}
+            aria-label="Generate caregiver invitation passcode"
             className="flex items-center gap-2 px-4 py-2.5 bg-primary-900 hover:bg-primary-800 text-white rounded-xl text-xs font-bold shadow-md shadow-primary-900/10 transition-all self-start sm:self-auto"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-4 h-4" aria-hidden="true" />
             <span>Generate Invitation Passcode</span>
           </button>
         )}
       </div>
 
       {/* Join with Passcode Section (For New Members) */}
-      <div className="bg-gradient-to-br from-blue-50/80 to-teal-50/40 p-6 rounded-2xl border border-blue-200 shadow-xs">
+      <div className="bg-gradient-to-br from-blue-50/80 to-teal-50/40 p-6 rounded-2xl border border-blue-200 shadow-xs" role="region" aria-label="Passcode Redemption">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
             <KeyRound className="w-5 h-5" />
           </div>
           <div className="flex-1">
@@ -94,6 +95,7 @@ export default function CareTeamPage() {
               <input
                 type="text"
                 placeholder="e.g. CR7-9B2"
+                aria-label="Caregiver 6-character invitation passcode"
                 maxLength={8}
                 value={joinPasscode}
                 onChange={(e) => setJoinPasscode(e.target.value.toUpperCase())}
@@ -102,6 +104,7 @@ export default function CareTeamPage() {
               <button
                 type="submit"
                 disabled={joinLoading}
+                aria-label="Verify and join care team with entered passcode"
                 className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
               >
                 {joinLoading ? 'Verifying...' : 'Verify & Join Care Team'}
@@ -109,8 +112,12 @@ export default function CareTeamPage() {
             </form>
 
             {joinMessage.text && (
-              <div className={`mt-2 text-xs flex items-center gap-1.5 font-semibold ${joinMessage.isError ? 'text-red-600' : 'text-emerald-700'}`}>
-                {joinMessage.isError ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+              <div
+                role="status"
+                aria-live="polite"
+                className={`mt-2 text-xs flex items-center gap-1.5 font-semibold ${joinMessage.isError ? 'text-red-600' : 'text-emerald-700'}`}
+              >
+                {joinMessage.isError ? <AlertCircle className="w-4 h-4" aria-hidden="true" /> : <CheckCircle2 className="w-4 h-4" aria-hidden="true" />}
                 <span>{joinMessage.text}</span>
               </div>
             )}
@@ -130,7 +137,7 @@ export default function CareTeamPage() {
             return (
               <div key={idx} className="py-3.5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-bold">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-bold" aria-hidden="true">
                     {isCaretaker ? '👩‍⚕️' : '👨‍👦'}
                   </div>
                   <div>
@@ -151,10 +158,11 @@ export default function CareTeamPage() {
                 {canInvite && member.userId !== currentUser?.uid && (
                   <button
                     onClick={() => handleRemoveMember(member.userId, member.name)}
+                    aria-label={`Revoke care team access for ${member.name}`}
                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs flex items-center gap-1 transition-colors"
                     title="Revoke access"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span className="hidden sm:inline">Revoke Access</span>
                   </button>
                 )}

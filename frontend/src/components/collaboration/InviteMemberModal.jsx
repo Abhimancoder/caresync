@@ -48,22 +48,33 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="invite-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center" aria-hidden="true">
               <KeyRound className="w-4 h-4" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">Generate Caregiver Passcode</h3>
+            <h3 id="invite-modal-title" className="text-base font-bold text-slate-900">
+              Generate Caregiver Passcode
+            </h3>
           </div>
-          <button onClick={handleReset} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-            <X className="w-5 h-5" />
+          <button
+            onClick={handleReset}
+            aria-label="Close passcode modal"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
+          <div role="alert" className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
             {error}
           </div>
         )}
@@ -75,8 +86,11 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
             </p>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Access Role *</label>
+              <label htmlFor="invite-member-role" className="block font-semibold text-slate-700 mb-1">
+                Access Role *
+              </label>
               <select
+                id="invite-member-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-medium"
@@ -87,8 +101,11 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Recipient Email (Optional)</label>
+              <label htmlFor="invite-member-email" className="block font-semibold text-slate-700 mb-1">
+                Recipient Email (Optional)
+              </label>
               <input
+                id="invite-member-email"
                 type="email"
                 placeholder="e.g. michael.harrison@gmail.com"
                 value={recipientEmail}
@@ -99,8 +116,8 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
             </div>
 
             {/* Security note */}
-            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-100 text-[11px] text-blue-900 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-blue-700 flex-shrink-0 mt-0.5" />
+            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-100 text-[11px] text-blue-900 flex items-start gap-2" role="note">
+              <ShieldCheck className="w-4 h-4 text-blue-700 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <span>
                 <strong>Cryptographic Protection:</strong> The generated code is hashed with bcrypt and expires automatically after 72 hours. Passcodes are rate-limited to 5 verification attempts.
               </span>
@@ -125,7 +142,7 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
           </form>
         ) : (
           <div className="mt-4 space-y-4 text-xs text-center">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto" aria-hidden="true">
               <KeyRound className="w-6 h-6" />
             </div>
 
@@ -145,23 +162,24 @@ export default function InviteMemberModal({ profileId, isOpen, onClose, onSucces
                 {generatedInvite.passcode}
               </span>
               <div className="flex items-center justify-center gap-1 text-[11px] text-slate-400 mt-2">
-                <Clock className="w-3 h-3 text-amber-400" />
+                <Clock className="w-3 h-3 text-amber-400" aria-hidden="true" />
                 <span>Valid for 72 Hours • Role: <strong>{generatedInvite.role}</strong></span>
               </div>
             </div>
 
             <button
               onClick={handleCopy}
+              aria-label="Copy invitation passcode to clipboard"
               className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
             >
               {copied ? (
-                <>
-                  <Check className="w-4 h-4" />
+                <div role="status" aria-live="polite" className="flex items-center gap-2">
+                  <Check className="w-4 h-4" aria-hidden="true" />
                   <span>Passcode Copied!</span>
-                </>
+                </div>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-4 h-4" aria-hidden="true" />
                   <span>Copy Passcode</span>
                 </>
               )}

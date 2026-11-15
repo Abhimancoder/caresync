@@ -66,22 +66,33 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="medication-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
       <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center" aria-hidden="true">
               <Pill className="w-4 h-4" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">Add New Prescription</h3>
+            <h3 id="medication-modal-title" className="text-base font-bold text-slate-900">
+              Add New Prescription
+            </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            aria-label="Close prescription modal"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
+          <div role="alert" className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
             {error}
           </div>
         )}
@@ -89,8 +100,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
         <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
           {/* Medication Name */}
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Medication Name *</label>
+            <label htmlFor="med-form-name" className="block font-semibold text-slate-700 mb-1">
+              Medication Name *
+            </label>
             <input
+              id="med-form-name"
               type="text"
               required
               placeholder="e.g. Lisinopril, Metformin"
@@ -103,8 +117,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
           {/* Dosage & Unit */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Dosage Amount *</label>
+              <label htmlFor="med-form-dosage" className="block font-semibold text-slate-700 mb-1">
+                Dosage Amount *
+              </label>
               <input
+                id="med-form-dosage"
                 type="text"
                 required
                 placeholder="e.g. 10, 500"
@@ -114,8 +131,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Unit</label>
+              <label htmlFor="med-form-unit" className="block font-semibold text-slate-700 mb-1">
+                Unit
+              </label>
               <select
+                id="med-form-unit"
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
@@ -134,8 +154,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
           {/* Form & Frequency */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Form</label>
+              <label htmlFor="med-form-shape" className="block font-semibold text-slate-700 mb-1">
+                Form
+              </label>
               <select
+                id="med-form-shape"
                 value={formData.form}
                 onChange={(e) => setFormData({ ...formData, form: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
@@ -149,8 +172,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Frequency</label>
+              <label htmlFor="med-form-frequency" className="block font-semibold text-slate-700 mb-1">
+                Frequency
+              </label>
               <select
+                id="med-form-frequency"
                 value={formData.frequency}
                 onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
@@ -170,9 +196,10 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
               <button
                 type="button"
                 onClick={handleAddTime}
+                aria-label="Add additional scheduled dose time"
                 className="text-primary-900 font-semibold hover:underline flex items-center gap-1"
               >
-                <Plus className="w-3 h-3" /> Add Time
+                <Plus className="w-3 h-3" aria-hidden="true" /> Add Time
               </button>
             </div>
             <div className="space-y-2">
@@ -181,6 +208,7 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
                   <input
                     type="time"
                     required
+                    aria-label={`Scheduled dose time slot ${idx + 1}`}
                     value={time}
                     onChange={(e) => handleTimeChange(idx, e.target.value)}
                     className="flex-1 px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -189,9 +217,10 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
                     <button
                       type="button"
                       onClick={() => handleRemoveTime(idx)}
+                      aria-label={`Remove scheduled dose time ${idx + 1}`}
                       className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -201,8 +230,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
 
           {/* Prescribing Doctor & Instructions */}
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Prescribing Doctor</label>
+            <label htmlFor="med-form-doctor" className="block font-semibold text-slate-700 mb-1">
+              Prescribing Doctor
+            </label>
             <input
+              id="med-form-doctor"
               type="text"
               placeholder="e.g. Dr. Angela Martinez, MD"
               value={formData.prescribingDoctor}
@@ -212,8 +244,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Special Instructions</label>
+            <label htmlFor="med-form-instructions" className="block font-semibold text-slate-700 mb-1">
+              Special Instructions
+            </label>
             <textarea
+              id="med-form-instructions"
               rows="2"
               placeholder="e.g. Take with a full glass of water after breakfast. Do not crush."
               value={formData.instructions}
@@ -225,8 +260,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Start Date</label>
+              <label htmlFor="med-form-start-date" className="block font-semibold text-slate-700 mb-1">
+                Start Date
+              </label>
               <input
+                id="med-form-start-date"
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
@@ -234,8 +272,11 @@ export default function MedicationFormModal({ profileId, isOpen, onClose, onSucc
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">End Date (Optional)</label>
+              <label htmlFor="med-form-end-date" className="block font-semibold text-slate-700 mb-1">
+                End Date (Optional)
+              </label>
               <input
+                id="med-form-end-date"
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}

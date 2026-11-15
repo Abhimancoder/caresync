@@ -64,9 +64,12 @@ export default function AppointmentsPage() {
 
         <div className="flex items-center gap-3">
           {/* Tabs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold" role="tablist" aria-label="Appointment view filter">
             <button
               onClick={() => setActiveTab('upcoming')}
+              role="tab"
+              aria-selected={activeTab === 'upcoming'}
+              aria-label={`View upcoming appointments (${appointments.upcoming.length})`}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 activeTab === 'upcoming' ? 'bg-primary-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
@@ -75,6 +78,9 @@ export default function AppointmentsPage() {
             </button>
             <button
               onClick={() => setActiveTab('past')}
+              role="tab"
+              aria-selected={activeTab === 'past'}
+              aria-label={`View past appointments (${appointments.past.length})`}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 activeTab === 'past' ? 'bg-primary-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
@@ -86,9 +92,10 @@ export default function AppointmentsPage() {
           {canEdit && (
             <button
               onClick={() => setIsModalOpen(true)}
+              aria-label="Schedule a doctor appointment"
               className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md shadow-teal-600/10 transition-all"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" aria-hidden="true" />
               <span>Schedule Visit</span>
             </button>
           )}
@@ -97,10 +104,10 @@ export default function AppointmentsPage() {
 
       {/* Appointment Cards */}
       {loading ? (
-        <div className="py-12 text-center text-slate-400 text-sm">Loading appointments...</div>
+        <div className="py-12 text-center text-slate-400 text-sm" role="status">Loading appointments...</div>
       ) : currentList.length === 0 ? (
         <div className="bg-white p-12 rounded-2xl text-center border border-slate-200">
-          <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" aria-hidden="true" />
           <h3 className="text-base font-bold text-slate-800">No {activeTab} appointments</h3>
           <p className="text-xs text-slate-500 mt-1">
             {activeTab === 'upcoming' ? 'Click "Schedule Visit" to record an upcoming appointment.' : 'No past appointment history recorded.'}
@@ -152,9 +159,10 @@ export default function AppointmentsPage() {
                 {canEdit && (
                   <button
                     onClick={() => handleDelete(appt.id, appt.doctorName)}
+                    aria-label={`Cancel visit with ${appt.doctorName}`}
                     className="text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Cancel Visit
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> Cancel Visit
                   </button>
                 )}
               </div>
