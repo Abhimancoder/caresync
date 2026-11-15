@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import zlib from 'zlib';
 
 // Config & Services
 import { isSimulationMode } from './config/emailConfig.js';
@@ -31,8 +32,51 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// High-efficiency server hygiene: disable x-powered-by header
+app.disable('x-powered-by');
+
 // Trust reverse proxy headers (Render, Cloud Run, Heroku)
 app.set('trust proxy', 1);
+
+// High-efficiency native gzip compression for JSON and text payloads > 1KB
+app.use((req, res, next) => {
+  const acceptEncoding = req.headers['accept-encoding'] || '';
+  if (!acceptEncoding.includes('gzip') || process.env.NODE_ENV === 'test') {
+    return next();
+  }
+
+  const originalSend = res.send;
+  res.send = function (body) {
+    if (res.headersSent || !body) {
+      return originalSend.call(this, body);
+    }
+    const contentType = String(res.getHeader('Content-Type') || '');
+    const isCompressible = typeof body === 'string' || Buffer.isBuffer(body);
+
+    if (
+      isCompressible &&
+      (contentType.includes('json') ||
+        contentType.includes('text') ||
+        contentType.includes('javascript') ||
+        contentType.includes('html'))
+    ) {
+      const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
+      if (buffer.length > 1024) {
+        try {
+          const compressed = zlib.gzipSync(buffer);
+          res.setHeader('Content-Encoding', 'gzip');
+          res.setHeader('Vary', 'Accept-Encoding');
+          res.removeHeader('Content-Length');
+          return originalSend.call(this, compressed);
+        } catch (e) {
+          return originalSend.call(this, body);
+        }
+      }
+    }
+    return originalSend.call(this, body);
+  };
+  next();
+});
 
 // 1. Security Headers & CORS
 app.use(helmet({

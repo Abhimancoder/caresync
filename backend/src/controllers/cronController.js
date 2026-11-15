@@ -10,7 +10,8 @@ import { logActivity } from '../services/auditLogger.js';
 import { AUDIT_ACTIONS, DOSE_STATUS, NOTIFICATION_TYPES } from '../config/constants.js';
 import { v4 as uuidv4 } from 'uuid';
 
-// In-memory notifications fallback for demo
+// In-memory notifications fallback for demo (bounded at 500 items to prevent memory leaks)
+const MAX_MEMORY_NOTIFICATIONS = 500;
 export const memoryNotifications = [];
 
 /**
@@ -39,7 +40,10 @@ async function createInAppNotification({
   if (db && typeof db.collection === 'function' && !profileId.startsWith('demo-')) {
     await db.collection('notifications').doc(notif.id).set(notif);
   } else {
-    memoryNotifications.unshift(notif);
+    memoryNotifications.push(notif);
+    if (memoryNotifications.length > MAX_MEMORY_NOTIFICATIONS) {
+      memoryNotifications.shift();
+    }
   }
 
   return notif;
@@ -212,7 +216,11 @@ export async function getNotifications(req, res, next) {
         .get();
       notifs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } else {
-      notifs = memoryNotifications.filter(n => n.profileId === profileId).slice(0, limit);
+      for (let i = memoryNotifications.length - 1; i >= 0 && notifs.length < limit; i--) {
+        if (memoryNotifications[i].profileId === profileId) {
+          notifs.push(memoryNotifications[i]);
+        }
+      }
     }
 
     const unreadCount = notifs.filter(n => !n.isRead).length;

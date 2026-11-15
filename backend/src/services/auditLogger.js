@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
  */
 
 // In-memory fallback if Firestore is running without live credentials
+// Bounded at 1000 items to guarantee O(1) memory bound and prevent memory leaks
+const MAX_MEMORY_LOGS = 1000;
 const memoryLogs = [];
 
 /**
@@ -49,13 +51,19 @@ export async function logActivity({
     if (db && typeof db.collection === 'function') {
       await db.collection('activityLogs').doc(logEntry.id).set(logEntry);
     } else {
-      memoryLogs.unshift(logEntry);
+      memoryLogs.push(logEntry);
+      if (memoryLogs.length > MAX_MEMORY_LOGS) {
+        memoryLogs.shift();
+      }
     }
     console.log(`📋 [Audit Log] ${logEntry.action}: ${logEntry.details} (by ${actorName} [${actorRole}])`);
     return logEntry;
   } catch (err) {
     console.warn('⚠️ [Audit Log] Failed to persist log entry to Firestore, buffering in memory:', err.message);
-    memoryLogs.unshift(logEntry);
+    memoryLogs.push(logEntry);
+    if (memoryLogs.length > MAX_MEMORY_LOGS) {
+      memoryLogs.shift();
+    }
     return logEntry;
   }
 }
@@ -81,9 +89,14 @@ export async function getProfileLogs(profileId, limit = 50) {
     console.warn('⚠️ [Audit Log Query] Falling back to memory buffer:', err.message);
   }
 
-  return memoryLogs
-    .filter(log => log.profileId === profileId)
-    .slice(0, limit);
+  // O(limit) reverse lookup: fetches newest records without copying entire array
+  const results = [];
+  for (let i = memoryLogs.length - 1; i >= 0 && results.length < limit; i--) {
+    if (memoryLogs[i].profileId === profileId) {
+      results.push(memoryLogs[i]);
+    }
+  }
+  return results;
 }
 
 export default {

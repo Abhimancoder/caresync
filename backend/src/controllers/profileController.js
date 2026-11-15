@@ -210,6 +210,24 @@ export async function deriveSanitizedProfileAuthorization(rawProfile, dbInstance
 
   // Exclude revoked members immediately
   const nonRevokedMembers = rawMembers.filter(m => m && m.userId && !revokedSet.has(m.userId));
+  const memberByUserId = new Map(nonRevokedMembers.map(m => [m.userId, m]));
+
+  // In-flight provenance memoization to prevent redundant database checks
+  const provenanceCache = new Map();
+  const verifyCaretakerMemo = async (m) => {
+    const key = `caretaker:${m.userId}`;
+    if (provenanceCache.has(key)) return provenanceCache.get(key);
+    const result = await isVerifiedCaretakerRecord(m, rawProfile, dbInstance, transaction);
+    provenanceCache.set(key, result);
+    return result;
+  };
+  const verifyFamilyMemo = async (m) => {
+    const key = `family:${m.userId}`;
+    if (provenanceCache.has(key)) return provenanceCache.get(key);
+    const result = await isVerifiedFamilyRecord(m, rawProfile, dbInstance, transaction);
+    provenanceCache.set(key, result);
+    return result;
+  };
 
   const caretakerIdsSet = new Set();
   const familyIdsSet = new Set();
@@ -220,7 +238,7 @@ export async function deriveSanitizedProfileAuthorization(rawProfile, dbInstance
     if (!m || !m.userId) continue;
 
     if (m.role === USER_ROLES.CARETAKER) {
-      const isVerifiedCaretaker = await isVerifiedCaretakerRecord(m, rawProfile, dbInstance, transaction);
+      const isVerifiedCaretaker = await verifyCaretakerMemo(m);
       if (isVerifiedCaretaker) {
         caretakerIdsSet.add(m.userId);
         verifiedMembersList.push(m);
@@ -228,7 +246,7 @@ export async function deriveSanitizedProfileAuthorization(rawProfile, dbInstance
         console.warn(`[Security Alert] Stripped unverified caretaker candidate (${m.userId}) from profile ${profileId}. Zero membership granted.`);
       }
     } else if (m.role === USER_ROLES.FAMILY) {
-      const isVerifiedFamily = await isVerifiedFamilyRecord(m, rawProfile, dbInstance, transaction);
+      const isVerifiedFamily = await verifyFamilyMemo(m);
       if (isVerifiedFamily) {
         familyIdsSet.add(m.userId);
         verifiedMembersList.push(m);
@@ -244,8 +262,8 @@ export async function deriveSanitizedProfileAuthorization(rawProfile, dbInstance
   if (Array.isArray(rawProfile.authorizedCaretakerIds)) {
     for (const cid of rawProfile.authorizedCaretakerIds) {
       if (!revokedSet.has(cid) && !familyIdsSet.has(cid) && !caretakerIdsSet.has(cid)) {
-        const memberRec = nonRevokedMembers.find(m => m.userId === cid) || { userId: cid, role: USER_ROLES.CARETAKER };
-        const isVerified = await isVerifiedCaretakerRecord(memberRec, rawProfile, dbInstance, transaction);
+        const memberRec = memberByUserId.get(cid) || { userId: cid, role: USER_ROLES.CARETAKER };
+        const isVerified = await verifyCaretakerMemo(memberRec);
         if (isVerified) {
           caretakerIdsSet.add(cid);
           if (!verifiedMembersList.some(m => m.userId === cid)) {
@@ -262,8 +280,8 @@ export async function deriveSanitizedProfileAuthorization(rawProfile, dbInstance
   if (Array.isArray(rawProfile.authorizedFamilyIds)) {
     for (const fid of rawProfile.authorizedFamilyIds) {
       if (!revokedSet.has(fid) && !caretakerIdsSet.has(fid) && !familyIdsSet.has(fid)) {
-        const memberRec = nonRevokedMembers.find(m => m.userId === fid) || { userId: fid, role: USER_ROLES.FAMILY };
-        const isVerified = await isVerifiedFamilyRecord(memberRec, rawProfile, dbInstance, transaction);
+        const memberRec = memberByUserId.get(fid) || { userId: fid, role: USER_ROLES.FAMILY };
+        const isVerified = await verifyFamilyMemo(memberRec);
         if (isVerified) {
           familyIdsSet.add(fid);
           if (!verifiedMembersList.some(m => m.userId === fid)) {

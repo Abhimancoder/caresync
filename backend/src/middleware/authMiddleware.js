@@ -35,6 +35,11 @@ export const DEMO_USERS = {
   },
 };
 
+// Fast in-memory token cache to prevent redundant crypto verification (60-second TTL)
+const tokenCache = new Map();
+const TOKEN_CACHE_TTL_MS = 60 * 1000;
+const MAX_TOKEN_CACHE_SIZE = 500;
+
 /**
  * CareSync Authentication Middleware
  * Validates Firebase ID tokens or handles demo tokens for evaluation
@@ -68,8 +73,14 @@ export async function authenticate(req, res, next) {
       }
     }
 
-    // 2. Live Firebase Token Verification
+    // 2. Live Firebase Token Verification (with fast TTL cache)
     if (auth && typeof auth.verifyIdToken === 'function') {
+      const cached = tokenCache.get(token);
+      if (cached && Date.now() < cached.expiresAt) {
+        req.user = cached.user;
+        return next();
+      }
+
       try {
         const decodedToken = await auth.verifyIdToken(token);
         req.user = {
@@ -78,6 +89,13 @@ export async function authenticate(req, res, next) {
           displayName: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
           role: decodedToken.role || USER_ROLES.ELDERLY, // Default or custom claim
         };
+
+        if (tokenCache.size >= MAX_TOKEN_CACHE_SIZE) {
+          const firstKey = tokenCache.keys().next().value;
+          tokenCache.delete(firstKey);
+        }
+        tokenCache.set(token, { user: req.user, expiresAt: Date.now() + TOKEN_CACHE_TTL_MS });
+
         return next();
       } catch (tokenErr) {
         return res.status(401).json({

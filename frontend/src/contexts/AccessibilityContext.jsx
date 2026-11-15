@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const AccessibilityContext = createContext();
 
@@ -27,18 +27,18 @@ export function AccessibilityProvider({ children }) {
     localStorage.setItem('caresync_high_contrast', isHighContrast);
   }, [isHighContrast]);
 
-  const setFontScale = (scale) => {
+  const setFontScale = useCallback((scale) => {
     setFontScaleState(scale);
-  };
+  }, []);
 
-  const toggleHighContrast = () => {
+  const toggleHighContrast = useCallback(() => {
     setIsHighContrast((prev) => !prev);
-  };
+  }, []);
 
   /**
    * Voice assistance for seniors (Text-to-Speech)
    */
-  const speak = (text) => {
+  const speak = useCallback((text) => {
     if (!('speechSynthesis' in window)) {
       console.warn('Speech synthesis not supported in this browser.');
       return;
@@ -48,33 +48,36 @@ export function AccessibilityProvider({ children }) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.9; // Slightly slower, calm cadence for elderly clarity
     utterance.pitch = 1.0;
-    
+
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
 
     window.speechSynthesis.speak(utterance);
-  };
+  }, []);
 
-  const stopSpeaking = () => {
+  const stopSpeaking = useCallback(() => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     }
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      fontScale,
+      setFontScale,
+      isHighContrast,
+      toggleHighContrast,
+      speak,
+      stopSpeaking,
+      isSpeaking,
+    }),
+    [fontScale, setFontScale, isHighContrast, toggleHighContrast, speak, stopSpeaking, isSpeaking]
+  );
 
   return (
-    <AccessibilityContext.Provider
-      value={{
-        fontScale,
-        setFontScale,
-        isHighContrast,
-        toggleHighContrast,
-        speak,
-        stopSpeaking,
-        isSpeaking,
-      }}
-    >
+    <AccessibilityContext.Provider value={value}>
       {children}
     </AccessibilityContext.Provider>
   );

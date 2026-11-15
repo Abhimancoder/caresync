@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -70,16 +70,16 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const loginWithDemo = (roleKey) => {
+  const loginWithDemo = useCallback((roleKey) => {
     const profile = DEMO_PROFILES[roleKey] || DEMO_PROFILES.caretaker;
     setCurrentUser(profile);
     localStorage.setItem('caresync_auth_token', profile.token);
     localStorage.setItem('caresync_user', JSON.stringify(profile));
     localStorage.setItem('caresync_user_role', profile.role);
     return profile;
-  };
+  }, []);
 
-  const loginWithEmail = async (email, password) => {
+  const loginWithEmail = useCallback(async (email, password) => {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -98,9 +98,9 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const registerWithEmail = async (email, password, displayName, role) => {
+  const registerWithEmail = useCallback(async (email, password, displayName, role) => {
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -120,9 +120,9 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       if (auth && !currentUser?.uid?.startsWith('demo-')) {
         await signOut(auth);
@@ -134,19 +134,22 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('caresync_auth_token');
     localStorage.removeItem('caresync_user');
     localStorage.removeItem('caresync_user_role');
-  };
+  }, [currentUser]);
+
+  const value = useMemo(
+    () => ({
+      currentUser,
+      loading,
+      loginWithDemo,
+      loginWithEmail,
+      registerWithEmail,
+      logout,
+    }),
+    [currentUser, loading, loginWithDemo, loginWithEmail, registerWithEmail, logout]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        loading,
-        loginWithDemo,
-        loginWithEmail,
-        registerWithEmail,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

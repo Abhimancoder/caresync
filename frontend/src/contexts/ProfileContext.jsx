@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api.js';
 import { useAuth } from './AuthContext.jsx';
 
@@ -32,41 +32,42 @@ export function ProfileProvider({ children }) {
   const [profiles, setProfiles] = useState([DEFAULT_PROFILE]);
   const [loading, setLoading] = useState(false);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
     try {
       const res = await api.get('/profiles');
       if (res.data && res.data.length > 0) {
         setProfiles(res.data);
-        const currentStillExists = res.data.find(p => p.id === activeProfile?.id);
-        if (currentStillExists) {
-          setActiveProfile(currentStillExists);
-        } else {
-          setActiveProfile(res.data[0]);
-        }
+        setActiveProfile(prev => {
+          const currentStillExists = res.data.find(p => p.id === prev?.id);
+          return currentStillExists || res.data[0];
+        });
       }
     } catch (err) {
       console.warn('Using default demo profile:', err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     fetchProfiles();
-  }, [currentUser]);
+  }, [fetchProfiles]);
+
+  const value = useMemo(
+    () => ({
+      activeProfile,
+      setActiveProfile,
+      profiles,
+      fetchProfiles,
+      loading,
+    }),
+    [activeProfile, profiles, fetchProfiles, loading]
+  );
 
   return (
-    <ProfileContext.Provider
-      value={{
-        activeProfile,
-        setActiveProfile,
-        profiles,
-        fetchProfiles,
-        loading,
-      }}
-    >
+    <ProfileContext.Provider value={value}>
       {children}
     </ProfileContext.Provider>
   );
